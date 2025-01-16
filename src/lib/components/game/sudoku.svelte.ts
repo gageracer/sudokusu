@@ -20,7 +20,7 @@ export class SudokuGame {
 	boxSize = $derived(this.getBoxSize())
 
 	constructor() {
-		onMount(() => this.loadGame())
+		this.loadGame()
 	}
 
 	reload(size = 9) {
@@ -109,7 +109,7 @@ export class SudokuGame {
 
 	private generateFullSolution(): Map<number, number> {
 		const solution = new Map<number, number>()
-
+		// console.log("gen size", this.size)
 		// Initialize empty grid
 		for (let y = 1; y <= this.size; y++) {
 			for (let x = 1; x <= this.size; x++) {
