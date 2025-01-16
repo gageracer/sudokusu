@@ -14,7 +14,10 @@ let isMobile = $derived(
 )
 
 const game = new SudokuGame()
-size = game.size
+if (game.size !== 0) {
+	size = game.size
+}
+
 let isPaused = $state(false)
 let highlightedNumber: number | null = $state(null)
 let selectedCell: SudokuCell | null = $state(null)
@@ -29,7 +32,7 @@ $effect(() => {
 		selectedCell = null
 		highlightedNumber = null
 		game.reload(size)
-		// console.log("size cange", size, game.size)
+		console.log("size cange", size, game.size)
 	}
 })
 
