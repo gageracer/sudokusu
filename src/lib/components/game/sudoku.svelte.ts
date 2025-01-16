@@ -14,14 +14,30 @@ export class SudokuGame {
 	sudoku: SvelteMap<number, SudokuCell> = new SvelteMap()
 	mistakes: MistakeCount = $state({ current: 0, total: 0 })
 	size = $state(0)
+	timeElapsed = $state(0)
 	remainingNumbers = new SvelteMap<number, number>()
 	boxSize = $derived(this.getBoxSize())
 
+	constructor() {
+		this.loadGame()
+	}
+
 	reload(size = 9) {
-		this.size = size
+		if (size !== this.size) {
+			// console.log("reload cange", size, this.size)
+			this.size = size
+			this.generateSudoku()
+			this.mistakes.current = 0
+			this.calculateRemainingNumbers()
+		}
+		this.saveGame()
+	}
+	reset() {
+		// console.log("reset cange", this.size)
 		this.generateSudoku()
 		this.mistakes.current = 0
 		this.calculateRemainingNumbers()
+		this.saveGame()
 	}
 
 	getBoxSize(): BoxSize {
@@ -29,8 +45,12 @@ export class SudokuGame {
 	}
 
 	reduceRemainingNumbers(val: number) {
-		this.remainingNumbers?.set(val, 
-		(this.remainingNumbers.get(val) - 1 > 0 ? this.remainingNumbers.get(val) - 1: 0))
+		this.remainingNumbers?.set(
+			val,
+			this.remainingNumbers.get(val) - 1 > 0
+				? this.remainingNumbers.get(val) - 1
+				: 0,
+		)
 	}
 
 	calculateRemainingNumbers() {
@@ -202,16 +222,21 @@ export class SudokuGame {
 			size: this.size,
 			sudoku: Array.from(this.sudoku.entries()),
 			remainingNumbers: Array.from(this.remainingNumbers.entries()),
-			// timeElapsed,
+			timeElapsed: this.timeElapsed,
 			// hintsRemaining: this.hintsRemaining,
 			// difficulty: this.difficulty
 		}
-		localStorage.setItem("savedGame", JSON.stringify(gameState))
+		// console.log("saved is", gameState)
+		localStorage.setItem("savedGameSudoku", JSON.stringify(gameState))
 	}
 
 	loadGame(): boolean {
-		const saved = localStorage.getItem("savedGame")
-		if (!saved) return false
+		const saved = localStorage.getItem("savedGameSudoku")
+		// console.log("load is", saved)
+		if (!saved) {
+			this.reset()
+			return false
+		}
 
 		const gameState = JSON.parse(saved)
 		this.size = gameState.size
@@ -219,7 +244,7 @@ export class SudokuGame {
 		this.remainingNumbers = new SvelteMap(gameState.remainingNumbers)
 		// this.hintsRemaining = gameState.hintsRemaining;
 		// this.difficulty = gameState.difficulty;
-		// timeElapsed = gameState.timeElapsed;
+		this.timeElapsed = gameState.timeElapsed
 		return true
 	}
 }

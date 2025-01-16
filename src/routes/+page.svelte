@@ -3,7 +3,7 @@ import * as RadioGroup from "$lib/components/ui/radio-group/index.js"
 import { Label } from "$lib/components/ui/label/index.js"
 import Sudoku from "$lib/components/game/Sudoku.svelte"
 
-let size = $state(4)
+let size: 2 | 4 | 6 | 8 | 9 = $state(4)
 let darkMode = $state(false)
 const options = [2, 4, 6, 8, 9]
 </script>
@@ -21,8 +21,7 @@ const options = [2, 4, 6, 8, 9]
     			{/each}
     		</RadioGroup.Root>
     	</div>
-    
-    	<Sudoku {size} bind:darkMode />
+
+    	<Sudoku bind:size bind:darkMode />
     </div>
 </div>
-

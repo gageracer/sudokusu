@@ -3,7 +3,7 @@ import type { SudokuCell } from "./types"
 import { SudokuGame } from "./sudoku.svelte.ts"
 
 let {
-	size,
+	size = $bindable(),
 	darkMode = $bindable(false),
 }: { size: number; darkMode?: boolean } = $props()
 
@@ -14,9 +14,7 @@ let isMobile = $derived(
 )
 
 const game = new SudokuGame()
-let currentSize = $state(size)
-game.reload(size)
-let timeElapsed = $state(0)
+size = game.size
 let isPaused = $state(false)
 let highlightedNumber: number | null = $state(null)
 let selectedCell: SudokuCell | null = $state(null)
@@ -25,19 +23,19 @@ let usedNumbersInBox = $derived(
 		? game.getUsedNumbersInBox(selectedCell.x, selectedCell.y)
 		: new Set<number>(),
 )
-$inspect("sudoku", game.sudoku)
+// $inspect("sudoku", game.sudoku)
 $effect(() => {
-	if (size !== currentSize) {
-		currentSize = size
+	if (size !== game.size) {
 		selectedCell = null
 		highlightedNumber = null
 		game.reload(size)
+		// console.log("size cange", size, game.size)
 	}
 })
 
 function handleReset() {
-	game.reload(size)
-	timeElapsed = 0
+	game.reset()
+	game.timeElapsed = 0
 	selectedCell = null
 	highlightedNumber = null
 	isPaused = false
@@ -61,7 +59,7 @@ function toggleDarkMode() {
 $effect(() => {
 	if (!isPaused) {
 		const interval = setInterval(() => {
-			timeElapsed++
+			game.timeElapsed++
 		}, 1000)
 
 		return () => clearInterval(interval)
@@ -173,6 +171,7 @@ function handleNumberSelect(num: number) {
 		highlightedNumber = null
 		isPaused = true
 	}
+	game.saveGame()
 }
 
 function getCellClasses(cell: SudokuCell) {
@@ -227,8 +226,8 @@ function isNumberDisabled(num: number): boolean {
 </script>
 
 <div class="mb-4 flex justify-between items-center dark:text-white">
-	<div>Time: {formatTime(timeElapsed)}</div>
-	<div>Mistakes: {game.mistakes.current}</div>
+	<div>Mistakes: {game.mistakes.current} | Total: {game.mistakes.total}</div>
+	<div>Time: {formatTime(game.timeElapsed)}</div>
 	 <div class="flex gap-2">
 	<button class="rounded bg-sky-800 px-4 py-2 text-white" onclick={() => (isPaused = !isPaused)}>
 		{isPaused ? 'Resume' : 'Pause'}
@@ -255,7 +254,7 @@ function isNumberDisabled(num: number): boolean {
     <div class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center">
         <div class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white">
             <h2 class="text-2xl font-bold mb-4">Congratulations!</h2>
-            <p class="mb-4">You completed the puzzle in {formatTime(timeElapsed)} with {game.mistakes.current} mistakes!</p>
+            <p class="mb-4">You completed the puzzle in {formatTime(game.timeElapsed)} with {game.mistakes.current} mistakes and {game.mistakes.total} total!</p>
             <button
                 class="rounded bg-blue-500 px-4 py-2 text-white"
                 onclick={handleReset}
@@ -271,7 +270,7 @@ function isNumberDisabled(num: number): boolean {
 	{#if game.remainingNumbers}
 		{#each game.remainingNumbers as [number, count]}
 			<div class="flex flex-col items-center">
-				<span class="text-lg font-bold dark:text-white {highlightedNumber === number ? 'bg-yellow-100' : ''}"
+				<span class="text-lg font-bold {highlightedNumber === number ? 'bg-yellow-300 dark:bg-yellow-800' : ''}" class:text-green-500={count === 0} class:dark:text-green-400={count === 0} class:dark:text-white ={count !== 0}
 					>{number}</span
 				>
 				<span class="text-sm dark:text-gray-300" class:text-green-500={count === 0} class:dark:text-green-400={count === 0}>{count}</span>
@@ -331,6 +330,7 @@ function isNumberDisabled(num: number): boolean {
 		⌫
 	</button>
 </div>
+
 <style>
     /* Make the container focusable without outline */
     .container:focus {
