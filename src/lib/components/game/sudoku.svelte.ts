@@ -24,7 +24,7 @@ export class SudokuGame {
 
 	reload(size = 9) {
 		if (size !== this.size) {
-			console.log("reload cange", size, this.size)
+			// console.log("reload cange", size, this.size)
 			this.size = size
 			this.generateSudoku()
 			this.mistakes.current = 0
@@ -33,7 +33,7 @@ export class SudokuGame {
 		this.saveGame()
 	}
 	reset() {
-		console.log("reset cange", this.size)
+		// console.log("reset cange", this.size)
 		this.generateSudoku()
 		this.mistakes.current = 0
 		this.calculateRemainingNumbers()
@@ -227,13 +227,13 @@ export class SudokuGame {
 			// hintsRemaining: this.hintsRemaining,
 			// difficulty: this.difficulty
 		}
-		console.log("saved is", gameState)
+		// console.log("saved is", gameState)
 		localStorage.setItem("savedGameSudoku", JSON.stringify(gameState))
 	}
 
 	loadGame(): boolean {
 		const saved = localStorage.getItem("savedGameSudoku")
-		console.log("load is", saved)
+		// console.log("load is", saved)
 		if (!saved) {
 			this.reset()
 			return false

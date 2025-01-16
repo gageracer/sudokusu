@@ -32,7 +32,7 @@ $effect(() => {
 		selectedCell = null
 		highlightedNumber = null
 		game.reload(size)
-		console.log("size cange", size, game.size)
+		// console.log("size cange", size, game.size)
 	}
 })
 
