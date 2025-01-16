@@ -1,5 +1,6 @@
 import { SvelteMap } from "svelte/reactivity"
 import type { BoxSize, MistakeCount, SudokuCell } from "./types"
+import { onMount } from "svelte"
 
 const GAME = "sudokusu"
 const GRIDSIZE: Map<number, BoxSize> = new Map([
@@ -19,7 +20,7 @@ export class SudokuGame {
 	boxSize = $derived(this.getBoxSize())
 
 	constructor() {
-		this.loadGame()
+		onMount(() => this.loadGame())
 	}
 
 	reload(size = 9) {
@@ -228,11 +229,11 @@ export class SudokuGame {
 			// difficulty: this.difficulty
 		}
 		// console.log("saved is", gameState)
-		localStorage.setItem("savedGameSudoku", JSON.stringify(gameState))
+		window.localStorage.setItem("savedGameSudoku", JSON.stringify(gameState))
 	}
 
 	loadGame(): boolean {
-		const saved = localStorage.getItem("savedGameSudoku")
+		const saved = window.localStorage.getItem("savedGameSudoku")
 		// console.log("load is", saved)
 		if (!saved) {
 			this.reset()

@@ -1,13 +1,14 @@
 <script lang="ts">
 import type { SudokuCell } from "./types"
 import { SudokuGame } from "./sudoku.svelte.ts"
+	import { browser } from "$app/environment";
 
 let {
 	size = $bindable(),
 	darkMode = $bindable(false),
 }: { size: number; darkMode?: boolean } = $props()
 
-let isMobile = $derived(
+let isMobile = $derived(browser ??
 	/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 		navigator.userAgent,
 	),
