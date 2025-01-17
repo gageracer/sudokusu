@@ -394,7 +394,9 @@ function isNumberDisabled(num: number): boolean {
 
  <!-- Pause Overlay -->
  {#if isPaused && !isWon}
-     <div class="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm
+     <!-- Add backdrop overlay -->
+     <div class="fixed inset-0 z-40 bg-transparent"></div>
+     <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-sm
                  flex items-center justify-center">
          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg text-center">
              <h2 class="text-xl font-bold mb-4 dark:text-white">Game Paused</h2>
