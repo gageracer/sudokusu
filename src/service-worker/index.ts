@@ -12,6 +12,8 @@ const CACHE = `game-sudokusu-${version ? version : ""}`
 const ASSETS = [
 	...build, // the app itself
 	...files, // everything in `static`
+	"/", // Add root path
+	"/manifest.json",
 ]
 
 sw.addEventListener("install", (event: ExtendableEvent) => {
@@ -36,6 +38,10 @@ sw.addEventListener("activate", (event: ExtendableEvent) => {
 })
 
 sw.addEventListener("fetch", (event: FetchEvent) => {
+	// Don't cache IndexedDB requests
+	if (event.request.url.includes("indexeddb")) {
+		return
+	}
 	// ignore POST requests etc
 	if (event.request.method !== "GET") return
 

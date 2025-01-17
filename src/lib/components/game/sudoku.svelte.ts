@@ -1,8 +1,13 @@
 import { SvelteMap } from "svelte/reactivity"
-import type { BoxSize, MistakeCount, SudokuCell } from "./types"
-import { onMount } from "svelte"
+import type { BoxSize, MistakeCount, SudokuCell, TimeCount } from "./types"
+import {
+	storeInIndexedDB,
+	fetchFromIndexedDB,
+	saveTime,
+	loadTime,
+	GAME_STORE,
+} from "./indexedDB"
 
-const GAME = "sudokusu"
 const GRIDSIZE: Map<number, BoxSize> = new Map([
 	[9, { width: 3, height: 3 }], // 3x3 boxes
 	[8, { width: 4, height: 2 }], // 4x2 boxes
@@ -15,25 +20,36 @@ export class SudokuGame {
 	sudoku: SvelteMap<number, SudokuCell> = new SvelteMap()
 	mistakes: MistakeCount = $state({ current: 0, total: 0 })
 	size = $state(0)
-	timeElapsed = $state(0)
+	init = $state(true)
+	time: TimeCount = $state({ timeElapsed: 0, totalTime: 0 })
+	lastInteractionTime = $state(Date.now())
 	remainingNumbers = new SvelteMap<number, number>()
 	boxSize = $derived(this.getBoxSize())
 
 	constructor() {
-		this.loadGame()
+		Promise.all([this.loadGame(), this.loadTime()])
+			.then(([loaded]) => {
+				if (!loaded) {
+					this.reload() // Default size if no saved game
+				}
+				this.init = false
+			})
+			.catch(console.error)
 	}
 
-	reload(size = 9) {
+	async reload(size = 9) {
+		if (this.init) return
 		if (size !== this.size) {
 			// console.log("reload cange", size, this.size)
 			this.size = size
 			this.generateSudoku()
 			this.mistakes.current = 0
+			this.time.timeElapsed = 0
 			this.calculateRemainingNumbers()
+			this.saveGame()
 		}
-		this.saveGame()
 	}
-	reset() {
+	async reset() {
 		// console.log("reset cange", this.size)
 		this.generateSudoku()
 		this.mistakes.current = 0
@@ -41,6 +57,25 @@ export class SudokuGame {
 		this.saveGame()
 	}
 
+	// Add method to update time
+	updateTime() {
+		this.time.timeElapsed++
+		this.time.totalTime++
+		this.saveTime().catch(console.error)
+	}
+
+	// Update interaction time
+	updateInteraction() {
+		this.lastInteractionTime = Date.now()
+	}
+
+	async loadTime(): Promise<void> {
+		const loadedTime = await loadTime()
+		this.time = {
+			timeElapsed: loadedTime.timeElapsed ?? 0,
+			totalTime: loadedTime.totalTime ?? 0,
+		}
+	}
 	getBoxSize(): BoxSize {
 		return GRIDSIZE.get(this.size) ?? { width: 3, height: 3 }
 	}
@@ -150,12 +185,24 @@ export class SudokuGame {
 		const solution = this.generateFullSolution()
 		this.sudoku.clear()
 
-		// Create the puzzle by selectively hiding numbers
+		// Calculate minimum and maximum numbers to show based on grid size
+		const totalCells = this.size * this.size
+		const minNumbers = Math.max(
+			Math.floor(totalCells * 0.3), // At least 30%
+			this.size > 2 ? this.size : 2, // At least 2 numbers for 2x2
+		)
+		const maxNumbers = Math.floor(totalCells * 0.7) // Never more than 70% filled
+
+		let shownNumbers = 0
+
+		// First pass: Create the puzzle by selectively hiding numbers
 		for (let y = 1; y <= this.size; y++) {
 			for (let x = 1; x <= this.size; x++) {
 				const id = this.size * (y - 1) + x
 				const solutionNum = solution.get(id) ?? 0
-				const isFixed = Math.random() > 0.6
+				// Adjust probability based on grid size
+				const showProbability = this.size > 6 ? 0.4 : this.size > 2 ? 0.3 : 0.2
+				const isFixed = Math.random() < showProbability
 
 				this.sudoku.set(id, {
 					x,
@@ -165,6 +212,81 @@ export class SudokuGame {
 					isValid: true,
 					solution: solutionNum,
 				})
+
+				if (isFixed) shownNumbers++
+			}
+		}
+
+		// Second pass: Adjust number of shown cells if needed
+		const cells = Array.from(this.sudoku.entries())
+
+		// If we have too many numbers showing, hide some
+		if (shownNumbers > maxNumbers) {
+			const fixedCells = cells
+				.filter(([_, cell]) => cell.isFixed)
+				.map(([id]) => id)
+
+			// Shuffle fixed cells
+			for (let i = fixedCells.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1))
+				;[fixedCells[i], fixedCells[j]] = [fixedCells[j], fixedCells[i]]
+			}
+
+			// Hide cells until we reach maximum
+			while (shownNumbers > maxNumbers && fixedCells.length > 0) {
+				const id = fixedCells.pop()
+				const cell = this.sudoku.get(id)!
+				cell.val = 0
+				cell.isFixed = false
+				shownNumbers--
+			}
+		}
+		// If we don't have enough numbers showing, show more
+		else if (shownNumbers < minNumbers) {
+			const emptyCells = cells
+				.filter(([_, cell]) => !cell.isFixed)
+				.map(([id]) => id)
+
+			// Shuffle empty cells
+			for (let i = emptyCells.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1))
+				;[emptyCells[i], emptyCells[j]] = [emptyCells[j], emptyCells[i]]
+			}
+
+			// Fill cells until we reach minimum
+			while (shownNumbers < minNumbers && emptyCells.length > 0) {
+				const id = emptyCells.pop()
+				const cell = this.sudoku.get(id)
+				cell.val = cell.solution
+				cell.isFixed = true
+				shownNumbers++
+			}
+		}
+
+		// For larger grids (>6), ensure at least one of each number is shown
+		if (this.size > 6) {
+			const shownNumbers = new Set(
+				Array.from(this.sudoku.values())
+					.filter((cell) => cell.isFixed)
+					.map((cell) => cell.val),
+			)
+
+			// For each missing number, find a cell with that solution and show it
+			for (let num = 1; num <= this.size; num++) {
+				if (!shownNumbers.has(num)) {
+					const availableCell = cells.find(
+						([_, cell]) => !cell.isFixed && cell.solution === num,
+					)
+
+					if (availableCell) {
+						const [id, cell] = availableCell
+						this.sudoku.set(id, {
+							...cell,
+							val: cell.solution,
+							isFixed: true,
+						})
+					}
+				}
 			}
 		}
 	}
@@ -219,35 +341,63 @@ export class SudokuGame {
 		)
 	}
 
-	saveGame(): void {
+	async saveGame(): Promise<void> {
 		const gameState = {
 			size: this.size,
+			mistakes: this.mistakes,
 			sudoku: Array.from(this.sudoku.entries()),
 			remainingNumbers: Array.from(this.remainingNumbers.entries()),
-			timeElapsed: this.timeElapsed,
-			// hintsRemaining: this.hintsRemaining,
-			// difficulty: this.difficulty
 		}
-		// console.log("saved is", gameState)
-		window.localStorage.setItem("savedGameSudoku", JSON.stringify(gameState))
+		// console.log(`setting siz: ${gameState.size}`)
+		// console.log(`setting sudo: ${gameState.sudoku}`)
+		// console.log(`setting remnum: ${gameState.remainingNumbers}`)
+		await storeInIndexedDB(GAME_STORE, gameState)
 	}
 
-	loadGame(): boolean {
-		const saved = window.localStorage.getItem("savedGameSudoku")
-		// console.log("load is", saved)
-		if (!saved) {
+	async loadGame(): Promise<boolean> {
+		try {
+			const gameState = await fetchFromIndexedDB(GAME_STORE)
+			if (!gameState) {
+				this.reset()
+				return false
+			}
+			this.size = gameState.size
+			this.mistakes = gameState.mistakes
+
+			// Clear existing maps
+			this.sudoku.clear()
+			this.remainingNumbers.clear()
+
+			// Properly load sudoku entries into existing SvelteMap
+			for (const [id, cell] of gameState.sudoku) {
+				this.sudoku.set(Number(id), {
+					x: cell.x,
+					y: cell.y,
+					val: cell.val,
+					isFixed: cell.isFixed,
+					isValid: cell.isValid,
+					solution: cell.solution,
+				})
+			}
+
+			// Load remaining numbers into existing SvelteMap
+			for (const [num, count] of gameState.remainingNumbers) {
+				this.remainingNumbers.set(Number(num), count)
+			}
+			// console.log(`getting siz: ${this.size}`)
+			// console.log(`getting sudo: ${JSON.stringify(gameState.sudoku)}`)
+			// console.log(`getting remnum: ${gameState.remainingNumbers}`)
+
+			return true
+		} catch (error) {
+			console.error("Error loading game:", error)
 			this.reset()
 			return false
 		}
+	}
 
-		const gameState = JSON.parse(saved)
-		this.size = gameState.size
-		this.sudoku = new SvelteMap(gameState.sudoku)
-		this.remainingNumbers = new SvelteMap(gameState.remainingNumbers)
-		// this.hintsRemaining = gameState.hintsRemaining;
-		// this.difficulty = gameState.difficulty;
-		this.timeElapsed = gameState.timeElapsed
-		return true
+	async saveTime(): Promise<void> {
+		await saveTime(this.time)
 	}
 }
 

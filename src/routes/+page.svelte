@@ -6,6 +6,14 @@ import Sudoku from "$lib/components/game/Sudoku.svelte"
 let size: 2 | 4 | 6 | 8 | 9 = $state(4)
 let darkMode = $state(false)
 const options = [2, 4, 6, 8, 9]
+const savedSize = localStorage.getItem("gamemode-size")
+if (savedSize !== null) {
+	size = JSON.parse(savedSize)
+}
+
+$effect(() => {
+	localStorage.setItem("gamemode-size", String(size))
+})
 </script>
 
 <div class="min-h-screen transition-colors" class:dark={darkMode}>

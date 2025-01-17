@@ -3,6 +3,28 @@ import type { SudokuCell } from "./types"
 import { SudokuGame } from "./sudoku.svelte.ts"
 import { browser } from "$app/environment"
 
+const AUTO_PAUSE_TIMEOUT = 30000 // 30 seconds
+
+const numberKeyMap: Record<string, number> = {
+	"1": 1,
+	"2": 2,
+	"3": 3,
+	"4": 4,
+	"5": 5,
+	"6": 6,
+	"7": 7,
+	"8": 8,
+	"9": 9,
+	q: 5,
+	w: 6,
+	e: 7,
+	r: 8,
+	t: 9,
+}
+
+let gridRef: HTMLDivElement
+let isWon = $state(false)
+
 let {
 	size = $bindable(),
 	darkMode = $bindable(false),
@@ -16,11 +38,12 @@ let isMobile = $derived(
 )
 
 const game = new SudokuGame()
-if (game.size !== 0) {
+
+if (game.size !== 0 && game.size !== size) {
 	size = game.size
 }
 
-let isPaused = $state(false)
+let isPaused = $state(true)
 let highlightedNumber: number | null = $state(null)
 let selectedCell: SudokuCell | null = $state(null)
 let usedNumbersInBox = $derived(
@@ -28,22 +51,24 @@ let usedNumbersInBox = $derived(
 		? game.getUsedNumbersInBox(selectedCell.x, selectedCell.y)
 		: new Set<number>(),
 )
-// $inspect("sudoku", game.sudoku)
+
+$inspect("sudoku", size)
 $effect(() => {
 	if (size !== game.size) {
 		selectedCell = null
 		highlightedNumber = null
 		game.reload(size)
-		// console.log("size cange", size, game.size)
+		// console.log("size cange", size, game.size, game.sudoku)
 	}
 })
 
 function handleReset() {
 	game.reset()
-	game.timeElapsed = 0
+	game.time.timeElapsed = 0
 	selectedCell = null
 	highlightedNumber = null
 	isPaused = false
+	isWon = false
 }
 
 $effect(() => {
@@ -59,38 +84,73 @@ function toggleDarkMode() {
 	darkMode = !darkMode
 	localStorage.setItem("sudoku-dark-mode", String(darkMode))
 }
+// Add auto-pause effect
+$effect(() => {
+	if (!isPaused) {
+		const checkInactivity = setInterval(() => {
+			const timeSinceLastInteraction = Date.now() - game.lastInteractionTime
+			if (timeSinceLastInteraction >= AUTO_PAUSE_TIMEOUT) {
+				isPaused = true
+			}
+		}, 1000)
 
+		return () => clearInterval(checkInactivity)
+	}
+})
 // Add timer logic
 $effect(() => {
 	if (!isPaused) {
-		const interval = setInterval(() => {
-			game.timeElapsed++
+		const checkInactivity = setInterval(() => {
+			if (!isWon) {
+				// Don't auto-pause if game is won
+				game.updateTime()
+				const timeSinceLastInteraction = Date.now() - game.lastInteractionTime
+				if (timeSinceLastInteraction >= AUTO_PAUSE_TIMEOUT) {
+					isPaused = true
+				}
+			}
 		}, 1000)
 
-		return () => clearInterval(interval)
+		return () => clearInterval(checkInactivity)
 	}
 })
 
+function handleGridClick() {
+	gridRef?.focus()
+}
+
+function handleNextDifficulty() {
+	const difficulties = [2, 4, 6, 8, 9]
+	const currentIndex = difficulties.indexOf(size)
+	if (currentIndex < difficulties.length - 1) {
+		size = difficulties[currentIndex + 1]
+	}
+	handleReset()
+}
+
 // Handle keyboard input
 function handleKeydown(event: KeyboardEvent) {
-	if (isMobile) return
+	// Prevent all inputs except space when paused
+	if (isPaused && event.key !== " ") {
+		return
+	}
+	game.updateInteraction()
+	const key = event.key.toLowerCase()
 
-	const key = event.key
-
-	// Handle numbers 1-9 (or 1-4 for smaller grids)
-	if (/^[1-9]$/.test(key) && Number.parseInt(key) <= size) {
-		handleNumberSelect(Number.parseInt(key))
+	// Handle mapped number keys
+	if (key in numberKeyMap) {
+		const num = numberKeyMap[key]
+		if (num <= size) {
+			handleNumberSelect(num)
+		}
+		return
 	}
 
 	// Handle Backspace/Delete for erasing
-	if (key === "Backspace" || key === "Delete" || key === "d" || key === "D") {
+	if (key === "backspace" || key === "delete" || key === "d") {
 		handleNumberSelect(0)
 	}
 
-	// r for Reset
-	if (key === "r" || key === "R") {
-		handleReset()
-	}
 	// space for pause/resume
 	if (key === " ") {
 		isPaused = !isPaused
@@ -99,18 +159,18 @@ function handleKeydown(event: KeyboardEvent) {
 	// Handle arrow keys for navigation
 	if (
 		selectedCell &&
-		["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)
+		["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)
 	) {
 		event.preventDefault() // Prevent page scrolling
 		const x = selectedCell.x
 		const y = selectedCell.y
 
 		const newCell = game.sudoku.get(
-			size * (key === "ArrowUp" ? y - 2 : key === "ArrowDown" ? y : y - 1) +
-				(key === "ArrowLeft" ? x - 1 : key === "ArrowRight" ? x + 1 : x),
+			size * (key === "arrowup" ? y - 2 : key === "arrowdown" ? y : y - 1) +
+				(key === "arrowleft" ? x - 1 : key === "arrowright" ? x + 1 : x),
 		)
 
-		if (newCell && !newCell.isFixed) {
+		if (newCell) {
 			handleCellClick(newCell)
 		}
 	}
@@ -122,36 +182,33 @@ function formatTime(seconds: number) {
 }
 
 function handleCellClick(cell: SudokuCell) {
-	// For fixed cells, just highlight the number
-	if (cell.isFixed) {
+	if (isPaused) return
+	game.updateInteraction()
+	// If cell has a value, highlight it
+	if (cell.val !== 0) {
 		highlightedNumber = cell.val
-		selectedCell = null
-		return
 	}
 
-	// For non-fixed cells
-	if (!cell.isFixed) {
-		// If cell has a value, highlight it
-		if (cell.val !== 0) {
-			highlightedNumber = cell.val
-		}
-
-		// Always allow selection of non-fixed cells
-		selectedCell = {
-			x: cell.x,
-			y: cell.y,
-			val: cell.val,
-			isFixed: cell.isFixed,
-			isValid: cell.isValid,
-			solution: cell.solution,
-		}
+	// Always allow selection of any cell
+	selectedCell = {
+		x: cell.x,
+		y: cell.y,
+		val: cell.val,
+		isFixed: cell.isFixed,
+		isValid: cell.isValid,
+		solution: cell.solution,
 	}
 }
 
 function handleNumberSelect(num: number) {
+	if (isPaused) return
+	game.updateInteraction()
 	highlightedNumber = num || null
 
 	if (!selectedCell) return
+
+	// If selected cell is fixed, don't modify it
+	if (selectedCell.isFixed) return
 
 	const isValidGuess =
 		num === 0 || game.isValid(selectedCell.x, selectedCell.y, num)
@@ -170,12 +227,13 @@ function handleNumberSelect(num: number) {
 			cell.isFixed = false
 		}
 	}
-
+	isPaused = false
 	if (game.isPuzzleComplete()) {
 		selectedCell = null
 		highlightedNumber = null
-		isPaused = true
+		isWon = true
 	}
+
 	game.saveGame()
 }
 
@@ -190,25 +248,33 @@ function getCellClasses(cell: SudokuCell) {
 		"border-gray-300 dark:border-gray-600",
 		"focus:outline-none",
 		cell.isFixed ? "" : "focus:bg-blue-50 dark:focus:bg-blue-900",
-	].join(" ")
+	]
+
+	// Border classes for box borders
+	const borderClasses = [
+		game.getBoxBorders(cell.x, cell.y).thickRight
+			? "border-r-2 border-r-black dark:border-r-yellow-800"
+			: "",
+		game.getBoxBorders(cell.x, cell.y).thickBottom
+			? "border-b-2 border-b-black dark:border-b-yellow-800"
+			: "",
+	]
+
+	// Selected cell highlight
+	if (selectedCell && selectedCell.x === cell.x && selectedCell.y === cell.y) {
+		baseClasses.push("ring-2 ring-blue-500 dark:ring-blue-400 z-10")
+	}
 
 	// Text color - can be red for wrong answers
 	const textColor =
 		cell.val !== 0 && !cell.isValid ? "text-red-500" : "dark:text-white"
 
-	// Background colors - can stack with text colors
+	// Background colors
 	const bgClasses = [
 		cell.isFixed ? "bg-gray-100 dark:bg-gray-700" : "bg-white dark:bg-gray-800",
 		highlightedNumber === cell.val && cell.val !== 0
 			? "bg-yellow-100 dark:bg-yellow-900"
 			: "",
-		!cell.isFixed &&
-		selectedCell &&
-		selectedCell.x === cell.x &&
-		selectedCell.y === cell.y
-			? "bg-blue-50 dark:bg-blue-900"
-			: "",
-		// Add box highlighting for keyboard navigation
 		selectedCell &&
 		Math.floor((cell.x - 1) / game.boxSize.width) ===
 			Math.floor((selectedCell.x - 1) / game.boxSize.width) &&
@@ -218,10 +284,10 @@ function getCellClasses(cell: SudokuCell) {
 			: "",
 		game.isPuzzleComplete() ? "bg-green-100 dark:bg-green-900" : "",
 	]
+
+	return [...baseClasses, ...borderClasses, textColor, ...bgClasses]
 		.filter(Boolean)
 		.join(" ")
-
-	return `${baseClasses} ${textColor} ${bgClasses}`
 }
 
 function isNumberDisabled(num: number): boolean {
@@ -231,8 +297,8 @@ function isNumberDisabled(num: number): boolean {
 </script>
 
 <div class="mb-4 flex justify-between items-center dark:text-white">
-	<div>Mistakes: {game.mistakes.current} | Total: {game.mistakes.total}</div>
-	<div>Time: {formatTime(game.timeElapsed)}</div>
+    <div>Mistakes: {game.mistakes.current} | Total: {game.mistakes.total}</div>
+    <div>Time: {formatTime(game.time.timeElapsed)}</div>
 	 <div class="flex gap-2">
 	<button class="rounded bg-sky-800 px-4 py-2 text-white" onclick={() => (isPaused = !isPaused)}>
 		{isPaused ? 'Resume' : 'Pause'}
@@ -255,17 +321,32 @@ function isNumberDisabled(num: number): boolean {
 </div>
 
 <!-- Add a win message with reset option -->
-{#if game.isPuzzleComplete()}
-    <div class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center">
+{#if isWon}
+    <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
         <div class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white">
             <h2 class="text-2xl font-bold mb-4">Congratulations!</h2>
-            <p class="mb-4">You completed the puzzle in {formatTime(game.timeElapsed)} with {game.mistakes.current} mistakes and {game.mistakes.total} total!</p>
-            <button
-                class="rounded bg-blue-500 px-4 py-2 text-white"
-                onclick={handleReset}
-            >
-                Play Again
-            </button>
+            <p class="mb-4">
+                You completed {size}x{size} puzzle in {formatTime(game.time.timeElapsed)}
+                <br>
+                with {game.mistakes.current} mistakes
+                and {game.mistakes.total} total!
+            </p>
+            <div class="flex gap-4 justify-center">
+                <button
+                    class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                    onclick={handleReset}
+                >
+                    Play Again
+                </button>
+                {#if size < 9}
+                    <button
+                        class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+                        onclick={handleNextDifficulty}
+                    >
+                        Next Size ({size + 2}x{size + 2})
+                    </button>
+                {/if}
+            </div>
         </div>
     </div>
 {/if}
@@ -286,28 +367,53 @@ function isNumberDisabled(num: number): boolean {
 
 <!-- Sudoku grid -->
 <div
-	class="mx-auto grid gap-0"
-	style:grid-template-columns={`repeat(${size}, minmax(0, 1fr))`}
+    bind:this={gridRef}
+    class="mx-auto grid gap-0 relative rounded-md"
+	style:grid-template-columns={`repeat(${game.size}, minmax(0, 1fr))`}
 	style:max-width="500px"
 	onkeydown={handleKeydown}
+	onclick={handleGridClick}
 	role="button"
 	tabindex="0"
 >
 	{#each game.sudoku.values() as cell}
-		<input
-			readonly
-			value={cell.val || ''}
-			data-fixed={cell.isFixed}
-			class={getCellClasses(cell)}
-			class:border-r-2={game.getBoxBorders(cell.x, cell.y).thickRight}
-			class:border-b-2={game.getBoxBorders(cell.x, cell.y).thickBottom}
-			class:border-r-black={game.getBoxBorders(cell.x, cell.y).thickRight}
-			class:border-b-black={game.getBoxBorders(cell.x, cell.y).thickBottom}
-			class:dark:border-r-yellow-800={game.getBoxBorders(cell.x, cell.y).thickRight}
-    class:dark:border-b-yellow-800={game.getBoxBorders(cell.x, cell.y).thickBottom}
-			onclick={() => handleCellClick(cell)}
-		/>
+    	<input
+        readonly
+        value={cell.val || ''}
+        data-fixed={cell.isFixed}
+        class={getCellClasses(cell)}
+           class:border-r-2={game.getBoxBorders(cell.x, cell.y).thickRight}
+           class:border-b-2={game.getBoxBorders(cell.x, cell.y).thickBottom}
+           class:border-r-black={game.getBoxBorders(cell.x, cell.y).thickRight}
+           class:border-b-black={game.getBoxBorders(cell.x, cell.y).thickBottom}
+           class:dark:border-r-yellow-800={game.getBoxBorders(cell.x, cell.y).thickRight}
+           class:dark:border-b-yellow-800={game.getBoxBorders(cell.x, cell.y).thickBottom}
+        onclick={() => handleCellClick(cell)}
+    />
 	{/each}
+
+ <!-- Pause Overlay -->
+ {#if isPaused && !isWon}
+     <div class="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm
+                 flex items-center justify-center">
+         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg text-center">
+             <h2 class="text-xl font-bold mb-4 dark:text-white">Game Paused</h2>
+             <div class="text-sm mb-4 dark:text-gray-300">
+                 <p>Current Time: {formatTime(game.time.timeElapsed)}</p>
+                 <p>Total Time: {formatTime(game.time.totalTime)}</p>
+             </div>
+             <button
+                 class="rounded bg-sky-800 px-4 py-2 text-white hover:bg-sky-700"
+                 onclick={() => {
+                     isPaused = false;
+                     game.updateInteraction();
+                 }}
+             >
+                 Resume Game
+             </button>
+         </div>
+     </div>
+ {/if}
 </div>
 
 <!-- Number pad -->
@@ -337,8 +443,11 @@ function isNumberDisabled(num: number): boolean {
 </div>
 
 <style>
-    /* Make the container focusable without outline */
-    .container:focus {
-        outline: none;
-    }
+    div[tabindex="0"] {
+         transition: all 0.1s ease-in-out;
+     }
+
+     input {
+         transition: all 0.1s ease-in-out;
+     }
 </style>
