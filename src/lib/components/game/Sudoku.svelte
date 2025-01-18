@@ -31,7 +31,7 @@ let {
 }: { size: number; darkMode?: boolean } = $props()
 
 let isMobile = $derived(
-	browser ??
+	browser &&
 		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 			navigator.userAgent,
 		),
@@ -339,11 +339,14 @@ function isNumberDisabled(num: number): boolean {
                     Play Again
                 </button>
                 {#if size < 9}
+                     {@const sizes = [2, 4, 6, 8, 9]}
+                     {@const nextSize = sizes[sizes.indexOf(size) + 1]}
                     <button
                         class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
                         onclick={handleNextDifficulty}
                     >
-                        Next Size ({size + 2}x{size + 2})
+                        Next Size ({nextSize}x{nextSize})
+
                     </button>
                 {/if}
             </div>
@@ -422,7 +425,7 @@ function isNumberDisabled(num: number): boolean {
 <div class="mx-auto mt-4 grid max-w-[500px] grid-cols-5 gap-2">
 	{#each Array.from({ length: size }, (_, i) => i + 1) as number}
 		<button
-			class="aspect-square rounded-md border border-gray-300 dark:border-gray-600 text-lg dark:text-white font-bold
+			class="aspect-square rounded-md border border-gray-300 dark:border-gray-600 text-lg dark:text-white font-bold grid place-items-center relative
         {highlightedNumber === number ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-white dark:bg-gray-800'}
         {isNumberDisabled(number)
 				? 'cursor-not-allowed opacity-50'
@@ -430,17 +433,30 @@ function isNumberDisabled(num: number): boolean {
 			onclick={() => handleNumberSelect(number)}
 			disabled={isNumberDisabled(number)}
 		>
-			{number}
+		    <div class="flex flex-col items-center h-4 justify-start">
+			<span class="leading-none mb-1">{number}</span>
+		    {#if !isMobile && number > 4}
+                <span class="text-xs opacity-50 leading-none">
+                    {number === 5 ? 'Q' :
+                     number === 6 ? 'W' :
+                     number === 7 ? 'E' :
+                     number === 8 ? 'R' :
+                     number === 9 ? 'T' : ''}
+                </span>
+            {/if}
+		    </div>
 		</button>
 	{/each}
 	<button
-	class="aspect-square rounded-md border border-gray-300 dark:border-gray-600
-            text-lg font-bold dark:text-white
-            bg-white dark:bg-gray-800
-            hover:bg-gray-100 dark:hover:bg-gray-700"
+	class="aspect-square rounded-md border border-gray-300 dark:border-gray-600 text-lg font-bold dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 grid place-items-center"
 		onclick={() => handleNumberSelect(0)}
 	>
-		⌫
+    	<div class="flex flex-col items-center h-4 justify-start">
+            <span class="leading-none mb-1">⌫</span>
+            {#if !isMobile}
+                <span class="text-[10px] leading-none opacity-50">D</span>
+            {/if}
+        </div>
 	</button>
 </div>
 
