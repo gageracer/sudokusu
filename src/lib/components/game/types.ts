@@ -1,3 +1,5 @@
+import type { SvelteSet } from "svelte/reactivity"
+
 export interface BoxSize {
 	width: number
 	height: number
@@ -14,6 +16,7 @@ export interface TimeCount {
 export interface SudokuCell {
 	x: number
 	y: number
+	guess: SvelteSet<number>
 	val: number
 	isFixed: boolean
 	isValid: boolean

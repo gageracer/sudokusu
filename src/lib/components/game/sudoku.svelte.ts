@@ -1,4 +1,4 @@
-import { SvelteMap } from "svelte/reactivity"
+import { SvelteMap, SvelteSet } from "svelte/reactivity"
 import type { BoxSize, MistakeCount, SudokuCell, TimeCount } from "./types"
 import {
 	storeInIndexedDB,
@@ -76,17 +76,14 @@ export class SudokuGame {
 			totalTime: loadedTime.totalTime ?? 0,
 		}
 	}
+
 	getBoxSize(): BoxSize {
 		return GRIDSIZE.get(this.size) ?? { width: 3, height: 3 }
 	}
 
 	reduceRemainingNumbers(val: number) {
-		this.remainingNumbers?.set(
-			val,
-			this.remainingNumbers.get(val) - 1 > 0
-				? this.remainingNumbers.get(val) - 1
-				: 0,
-		)
+		const currentCount = this.remainingNumbers.get(val) ?? 0
+		this.remainingNumbers.set(val, currentCount - 1 > 0 ? currentCount - 1 : 0)
 	}
 
 	calculateRemainingNumbers() {
@@ -211,6 +208,7 @@ export class SudokuGame {
 					isFixed: isFixed,
 					isValid: true,
 					solution: solutionNum,
+					guess: new SvelteSet(),
 				})
 
 				if (isFixed) shownNumbers++
@@ -235,10 +233,14 @@ export class SudokuGame {
 			// Hide cells until we reach maximum
 			while (shownNumbers > maxNumbers && fixedCells.length > 0) {
 				const id = fixedCells.pop()
-				const cell = this.sudoku.get(id)!
-				cell.val = 0
-				cell.isFixed = false
-				shownNumbers--
+				if (id !== undefined) {
+					const cell = this.sudoku.get(id)
+					if (cell) {
+						cell.val = 0
+						cell.isFixed = false
+						shownNumbers--
+					}
+				}
 			}
 		}
 		// If we don't have enough numbers showing, show more
@@ -256,10 +258,14 @@ export class SudokuGame {
 			// Fill cells until we reach minimum
 			while (shownNumbers < minNumbers && emptyCells.length > 0) {
 				const id = emptyCells.pop()
-				const cell = this.sudoku.get(id)
-				cell.val = cell.solution
-				cell.isFixed = true
-				shownNumbers++
+				if (id !== undefined) {
+					const cell = this.sudoku.get(id)
+					if (cell) {
+						cell.val = cell.solution
+						cell.isFixed = true
+						shownNumbers++
+					}
+				}
 			}
 		}
 
@@ -315,7 +321,7 @@ export class SudokuGame {
 			for (let j = boxStartX; j < boxStartX + this.boxSize.width; j++) {
 				const id = this.size * (i - 1) + j
 				const cell = this.sudoku.get(id)
-				if (cell?.val > 0) {
+				if (cell?.val && cell.val > 0) {
 					usedNumbers.add(cell.val)
 				}
 			}
@@ -324,6 +330,24 @@ export class SudokuGame {
 		return usedNumbers
 	}
 
+	updateGuessesInBox(x: number, y: number, num: number): void {
+		const boxStartX =
+			Math.floor((x - 1) / this.boxSize.width) * this.boxSize.width + 1
+		const boxStartY =
+			Math.floor((y - 1) / this.boxSize.height) * this.boxSize.height + 1
+
+		// Iterate through all cells in the same box
+		for (let i = boxStartY; i < boxStartY + this.boxSize.height; i++) {
+			for (let j = boxStartX; j < boxStartX + this.boxSize.width; j++) {
+				const id = this.size * (i - 1) + j
+				const cell = this.sudoku.get(id)
+				// Remove the correctly guessed number from other cells' guesses
+				if (cell?.guess.has(num)) {
+					cell.guess.delete(num)
+				}
+			}
+		}
+	}
 	getBoxBorders(x: number, y: number) {
 		const boxRow = Math.floor((y - 1) / this.boxSize.height)
 		const boxCol = Math.floor((x - 1) / this.boxSize.width)
@@ -345,7 +369,14 @@ export class SudokuGame {
 		const gameState = {
 			size: this.size,
 			mistakes: this.mistakes,
-			sudoku: Array.from(this.sudoku.entries()),
+			sudoku: Array.from(this.sudoku.entries()).map(([id, cell]) => [
+				id,
+				{
+					...cell,
+					// Convert SvelteSet to Array before saving
+					guess: Array.from(cell.guess.values()),
+				},
+			]),
 			remainingNumbers: Array.from(this.remainingNumbers.entries()),
 		}
 		// console.log(`setting siz: ${gameState.size}`)
@@ -370,6 +401,18 @@ export class SudokuGame {
 
 			// Properly load sudoku entries into existing SvelteMap
 			for (const [id, cell] of gameState.sudoku) {
+				const guessSet = new SvelteSet<number>()
+
+				if (cell.guess && Array.isArray(cell.guess)) {
+					for (const num of cell.guess) {
+						guessSet.add(num)
+					}
+				} else if (cell.guess && typeof cell.guess === "object") {
+					for (const num of cell.guess) {
+						guessSet.add(num)
+					}
+				}
+
 				this.sudoku.set(Number(id), {
 					x: cell.x,
 					y: cell.y,
@@ -377,6 +420,7 @@ export class SudokuGame {
 					isFixed: cell.isFixed,
 					isValid: cell.isValid,
 					solution: cell.solution,
+					guess: guessSet,
 				})
 			}
 

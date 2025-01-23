@@ -21,6 +21,7 @@ $effect(() => {
     	<!-- Grid size selector -->
     	<div class="mb-4">
     		<RadioGroup.Root class="flex justify-around gap-4" bind:value={size}>
+            <span class="dark:text-white">Size</span>
     			{#each options as optionSize}
     				<div class="flex items-center space-x-2">
     					<RadioGroup.Item value={optionSize} id={`option-${optionSize}`} />

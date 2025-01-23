@@ -24,6 +24,7 @@ const numberKeyMap: Record<string, number> = {
 
 let gridRef: HTMLDivElement
 let isWon = $state(false)
+let isGuess = $state(false)
 
 let {
 	size = $bindable(),
@@ -84,19 +85,10 @@ function toggleDarkMode() {
 	darkMode = !darkMode
 	localStorage.setItem("sudoku-dark-mode", String(darkMode))
 }
-// Add auto-pause effect
-$effect(() => {
-	if (!isPaused) {
-		const checkInactivity = setInterval(() => {
-			const timeSinceLastInteraction = Date.now() - game.lastInteractionTime
-			if (timeSinceLastInteraction >= AUTO_PAUSE_TIMEOUT) {
-				isPaused = true
-			}
-		}, 1000)
 
-		return () => clearInterval(checkInactivity)
-	}
-})
+function toggleGuessMode() {
+	isGuess = !isGuess
+}
 // Add timer logic
 $effect(() => {
 	if (!isPaused) {
@@ -150,6 +142,10 @@ function handleKeydown(event: KeyboardEvent) {
 	if (key === "backspace" || key === "delete" || key === "d") {
 		handleNumberSelect(0)
 	}
+	// Handle Guess Mode
+	if (key === "c") {
+		toggleGuessMode()
+	}
 
 	// space for pause/resume
 	if (key === " ") {
@@ -190,14 +186,7 @@ function handleCellClick(cell: SudokuCell) {
 	}
 
 	// Always allow selection of any cell
-	selectedCell = {
-		x: cell.x,
-		y: cell.y,
-		val: cell.val,
-		isFixed: cell.isFixed,
-		isValid: cell.isValid,
-		solution: cell.solution,
-	}
+	selectedCell = cell
 }
 
 function handleNumberSelect(num: number) {
@@ -216,15 +205,21 @@ function handleNumberSelect(num: number) {
 	const cell = game.sudoku.get(id)
 
 	if (cell) {
-		cell.val = num
-		// Always update isValid
-		cell.isValid = isValidGuess
-		// Only make it fixed if it's a correct guess
-		if (isValidGuess && num !== 0) {
-			cell.isFixed = true
+		if (isGuess) {
+			cell.guess?.has(num) ? cell.guess?.delete(num) : cell.guess?.add(num)
 		} else {
-			// Ensure cell stays unfixed if wrong or erased
-			cell.isFixed = false
+			cell.val = num
+			// Always update isValid
+			cell.isValid = isValidGuess
+			// Only make it fixed if it's a correct guess
+			if (isValidGuess && num !== 0) {
+				cell.isFixed = true
+				cell.guess?.clear()
+				game.updateGuessesInBox(selectedCell.x, selectedCell.y, num)
+			} else {
+				// Ensure cell stays unfixed if wrong or erased
+				cell.isFixed = false
+			}
 		}
 	}
 	isPaused = false
@@ -262,12 +257,20 @@ function getCellClasses(cell: SudokuCell) {
 
 	// Selected cell highlight
 	if (selectedCell && selectedCell.x === cell.x && selectedCell.y === cell.y) {
-		baseClasses.push("ring-2 ring-blue-500 dark:ring-blue-400 z-10")
+		baseClasses.push(
+			isGuess
+				? "ring-2 ring-green-500 dark:ring-green-400 z-10"
+				: "ring-2 ring-blue-500 dark:ring-blue-400 z-10",
+		)
 	}
 
 	// Text color - can be red for wrong answers
 	const textColor =
-		cell.val !== 0 && !cell.isValid ? "text-red-500" : "dark:text-white"
+		cell.val !== 0 && !cell.isValid
+			? "text-red-500"
+			: cell.guess?.size > 0
+				? "text-green-600 dark:text-green-400"
+				: "dark:text-white"
 
 	// Background colors
 	const bgClasses = [
@@ -371,7 +374,7 @@ function isNumberDisabled(num: number): boolean {
 <!-- Sudoku grid -->
 <div
     bind:this={gridRef}
-    class="mx-auto grid gap-0 relative rounded-md"
+    class="mx-auto grid gap-0 relative rounded-md border border-gray-300 dark:border-gray-600 {isGuess ? 'border-green-400 dark:border-green-600':''}"
 	style:grid-template-columns={`repeat(${game.size}, minmax(0, 1fr))`}
 	style:max-width="500px"
 	onkeydown={handleKeydown}
@@ -380,19 +383,27 @@ function isNumberDisabled(num: number): boolean {
 	tabindex="0"
 >
 	{#each game.sudoku.values() as cell}
+	<div class="relative {getCellClasses(cell)}">
     	<input
         readonly
-        value={cell.val || ''}
+        value={cell.guess.size > 0 && !cell.val ? '' : cell.val || ''}
         data-fixed={cell.isFixed}
         class={getCellClasses(cell)}
-           class:border-r-2={game.getBoxBorders(cell.x, cell.y).thickRight}
-           class:border-b-2={game.getBoxBorders(cell.x, cell.y).thickBottom}
-           class:border-r-black={game.getBoxBorders(cell.x, cell.y).thickRight}
-           class:border-b-black={game.getBoxBorders(cell.x, cell.y).thickBottom}
-           class:dark:border-r-yellow-800={game.getBoxBorders(cell.x, cell.y).thickRight}
-           class:dark:border-b-yellow-800={game.getBoxBorders(cell.x, cell.y).thickBottom}
+                
         onclick={() => handleCellClick(cell)}
     />
+     {#if cell.guess.size > 0 && !cell.val}
+             <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none text-xs p-0.5">
+                 {#each Array.from({length: 9}, (_, i) => i + 1) as num}
+                     <div class="flex items-center justify-center">
+                         {#if cell.guess.has(num)}
+                             <span class="text-green-600 dark:text-green-400 opacity-70">{num}</span>
+                         {/if}
+                     </div>
+                 {/each}
+             </div>
+         {/if}
+	</div>
 	{/each}
 
  <!-- Pause Overlay -->
@@ -404,8 +415,8 @@ function isNumberDisabled(num: number): boolean {
          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg text-center">
              <h2 class="text-xl font-bold mb-4 dark:text-white">Game Paused</h2>
              <div class="text-sm mb-4 dark:text-gray-300">
-                 <p>Current Time: {formatTime(game.time.timeElapsed)}</p>
-                 <p>Total Time: {formatTime(game.time.totalTime)}</p>
+                 <p>Current Game: {formatTime(game.time.timeElapsed)}</p>
+                 <p>Total Playtime: {formatTime(game.time.totalTime)}</p>
              </div>
              <button
                  class="rounded bg-sky-800 px-4 py-2 text-white hover:bg-sky-700"
@@ -454,7 +465,20 @@ function isNumberDisabled(num: number): boolean {
     	<div class="flex flex-col items-center h-4 justify-start">
             <span class="leading-none mb-1">⌫</span>
             {#if !isMobile}
-                <span class="text-[10px] leading-none opacity-50">D</span>
+                <span class="text-xs leading-none opacity-50">D</span>
+            {/if}
+        </div>
+	</button>
+	<button
+	class="aspect-square rounded-md border border-gray-300 dark:border-gray-600 text-lg font-bold bg-white dark:bg-gray-800 dark:text-white grid place-items-center {isGuess ? 'bg-green-200 border-green-600 dark:border-green-600':''}"
+		onclick={toggleGuessMode}
+	>
+    	<div class="flex flex-col items-center h-4 justify-start">
+            <span class="leading-none mb-1 {isGuess
+                ? 'text-green-500 dark:text-green-600'
+                : 'bg-white dark:bg-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'} ">﹖</span>
+            {#if !isMobile}
+                <span class="text-xs leading-none opacity-50">C</span>
             {/if}
         </div>
 	</button>
