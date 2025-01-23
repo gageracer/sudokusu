@@ -200,7 +200,7 @@ function handleNumberSelect(num: number) {
 	if (selectedCell.isFixed) return
 
 	const isValidGuess =
-		(!isGuess && num === 0) || game.isValid(selectedCell.x, selectedCell.y, num)
+		!isGuess && (num === 0 || game.isValid(selectedCell.x, selectedCell.y, num))
 	const id = size * (selectedCell.y - 1) + selectedCell.x
 	const cell = game.sudoku.get(id)
 
