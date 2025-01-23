@@ -200,7 +200,7 @@ function handleNumberSelect(num: number) {
 	if (selectedCell.isFixed) return
 
 	const isValidGuess =
-		num === 0 || game.isValid(selectedCell.x, selectedCell.y, num)
+		(!isGuess && num === 0) || game.isValid(selectedCell.x, selectedCell.y, num)
 	const id = size * (selectedCell.y - 1) + selectedCell.x
 	const cell = game.sudoku.get(id)
 
@@ -389,7 +389,7 @@ function isNumberDisabled(num: number): boolean {
         value={cell.guess.size > 0 && !cell.val ? '' : cell.val || ''}
         data-fixed={cell.isFixed}
         class={getCellClasses(cell)}
-                
+
         onclick={() => handleCellClick(cell)}
     />
      {#if cell.guess.size > 0 && !cell.val}
