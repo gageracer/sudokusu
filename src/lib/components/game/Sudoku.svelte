@@ -389,7 +389,7 @@ function isNumberDisabled(num: number): boolean {
         value={cell.guess.size > 0 && !cell.val ? '' : cell.val || ''}
         data-fixed={cell.isFixed}
         class={getCellClasses(cell)}
-
+        ondblclick={toggleGuessMode}
         onclick={() => handleCellClick(cell)}
     />
      {#if cell.guess.size > 0 && !cell.val}
