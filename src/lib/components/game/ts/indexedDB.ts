@@ -1,9 +1,10 @@
-import type { gameState, MistakeCount, SudokuCell, TimeCount } from "./types"
+import type {  gameState, Statistics,  MistakeCount,  SudokuCell,  TimeCount } from "./types"
 
 const DB_NAME = "sudokusuDB"
 export const GAME_STORE = "gameState"
 export const TIME_STORE = "timeState"
-const DB_VERSION = 1
+export const STATS_STORE = "statsState"
+const DB_VERSION = 2
 
 async function openDB(): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
@@ -21,8 +22,48 @@ async function openDB(): Promise<IDBDatabase> {
 			if (!db.objectStoreNames.contains(TIME_STORE)) {
 				db.createObjectStore(TIME_STORE)
 			}
+			if (!db.objectStoreNames.contains(STATS_STORE)) {
+				db.createObjectStore(STATS_STORE)
+			}
 		}
 	})
+}
+
+// Add new functions for statistics
+export async function saveStats(stats: Statistics): Promise<void> {
+    try {
+        const plainStats = JSON.parse(JSON.stringify(stats))
+        const db = await openDB()
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STATS_STORE, "readwrite")
+            const store = transaction.objectStore(STATS_STORE)
+            const request = store.put(plainStats, "gameStats")
+
+            request.onsuccess = () => resolve()
+            request.onerror = () => reject(request.error)
+            transaction.oncomplete = () => db.close()
+        })
+    } catch (error) {
+        console.error("Error saving stats:", error)
+    }
+}
+
+export async function loadStats(): Promise<Statistics | null> {
+    try {
+        const db = await openDB()
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STATS_STORE, "readonly")
+            const store = transaction.objectStore(STATS_STORE)
+            const request = store.get("gameStats")
+
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(request.error)
+            transaction.oncomplete = () => db.close()
+        })
+    } catch (error) {
+        console.error("Error loading stats:", error)
+        return null
+    }
 }
 // Specific function for saving time
 export async function saveTime(time: TimeCount): Promise<void> {
@@ -65,7 +106,7 @@ export async function loadTime(): Promise<TimeCount> {
 
 export async function storeInIndexedDB(
 	key: string,
-	value: gameState,
+	value: gameState | Statistics,
 ): Promise<void> {
 	try {
 		const plainValue = JSON.parse(JSON.stringify(value))
@@ -84,7 +125,7 @@ export async function storeInIndexedDB(
 	}
 }
 
-export async function fetchFromIndexedDB(key: string): Promise<gameState> {
+export async function fetchFromIndexedDB(key: string): Promise<gameState | Statistics> {
 	try {
 		const db = await openDB()
 		return new Promise((resolve, reject) => {
