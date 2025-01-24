@@ -1,5 +1,13 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity"
-import type { BoxSize, MistakeCount, SudokuCell, TimeCount } from "./types"
+import {
+	type BoxSize,
+	type GameMode,
+	type MistakeCount,
+	type SudokuCell,
+	type TimeCount,
+	type Statistics,
+  DEFAULT_STATISTICS,
+} from "./types"
 import {
 	storeInIndexedDB,
 	fetchFromIndexedDB,
@@ -19,6 +27,7 @@ const GRIDSIZE: Map<number, BoxSize> = new Map([
 export class SudokuGame {
 	sudoku: SvelteMap<number, SudokuCell> = new SvelteMap()
 	mistakes: MistakeCount = $state({ current: 0, total: 0 })
+	statistics: Statistics = $state(DEFAULT_STATISTICS)
 	size = $state(0)
 	init = $state(true)
 	time: TimeCount = $state({ timeElapsed: 0, totalTime: 0 })
@@ -27,7 +36,7 @@ export class SudokuGame {
 	boxSize = $derived(this.getBoxSize())
 
 	constructor() {
-		Promise.all([this.loadGame(), this.loadTime()])
+		Promise.all([this.loadGame(), this.loadTime(), this.loadStatistics()])
 			.then(([loaded]) => {
 				if (!loaded) {
 					this.reload() // Default size if no saved game
@@ -47,6 +56,7 @@ export class SudokuGame {
 			this.time.timeElapsed = 0
 			this.calculateRemainingNumbers()
 			this.saveGame()
+			this.saveStatistics()
 		}
 	}
 	async reset() {
@@ -55,18 +65,30 @@ export class SudokuGame {
 		this.mistakes.current = 0
 		this.calculateRemainingNumbers()
 		this.saveGame()
+		this.saveStatistics()
 	}
 
 	// Add method to update time
 	updateTime() {
 		this.time.timeElapsed++
 		this.time.totalTime++
+
+		const mode = this.size as GameMode
+		this.statistics.modes[mode].totalPlayTime++
+
 		this.saveTime().catch(console.error)
 	}
 
 	// Update interaction time
 	updateInteraction() {
 		this.lastInteractionTime = Date.now()
+	}
+
+	getStars(mistakes: number): number {
+		if (mistakes === 0) return 4
+		if (mistakes <= 2) return 3
+		if (mistakes <= 4) return 2
+		return 1
 	}
 
 	async loadTime(): Promise<void> {
@@ -176,6 +198,52 @@ export class SudokuGame {
 		}
 
 		return false
+	}
+
+	private async loadStatistics(): Promise<void> {
+		const stats = (await fetchFromIndexedDB("statistics")) as Statistics
+		if (stats) {
+			this.statistics = stats
+		}
+	}
+
+	private async saveStatistics(): Promise<void> {
+		await storeInIndexedDB("statistics", this.statistics)
+	}
+
+	async handleGameWon() {
+		const mode = this.size as GameMode
+		const modeStats = this.statistics.modes[mode]
+
+		modeStats.gamesWon++
+		modeStats.mistakes += this.mistakes.current
+
+		switch (this.getStars(this.mistakes.current)) {
+			case 4:
+				modeStats.perfectGames++
+				break
+			case 3:
+				modeStats.threeStarGames++
+				break
+			case 2:
+				modeStats.twoStarGames++
+				break
+			case 1:
+				modeStats.oneStarGames++
+				break
+		}
+
+		if (!modeStats.fastestWin || this.time.timeElapsed < modeStats.fastestWin) {
+			modeStats.fastestWin = this.time.timeElapsed
+		}
+		if (!modeStats.longestWin || this.time.timeElapsed > modeStats.longestWin) {
+			modeStats.longestWin = this.time.timeElapsed
+		}
+
+		this.statistics.totalMistakes += this.mistakes.current
+		this.statistics.totalGamesWon++
+
+		await this.saveStatistics()
 	}
 
 	generateSudoku(): void {
@@ -301,9 +369,15 @@ export class SudokuGame {
 		const id = this.size * (y - 1) + x
 		const cell = this.sudoku.get(id)
 		const result = cell?.solution === num
+
 		if (!result && num !== 0) {
 			this.mistakes.current++
 			this.mistakes.total++
+
+			const mode = this.size as GameMode
+			this.statistics.modes[mode].mistakes++
+			this.statistics.totalMistakes++
+			this.saveStatistics()
 		}
 		if (result) this.reduceRemainingNumbers(num)
 		return result
@@ -357,12 +431,25 @@ export class SudokuGame {
 			thickBottom: y === this.boxSize.height * (boxRow + 1) && y !== this.size,
 		}
 	}
-
+	
+	// Add a new method to check and handle completion
+	async checkAndHandleCompletion(): Promise<boolean> {
+		const complete = this.isPuzzleComplete()
+		if (complete) {
+			await this.handleGameWon()
+		}
+		return complete
+	}
+	
 	isPuzzleComplete(): boolean {
 		if (this.remainingNumbers.size === 0) return false
-		return Array.from(this.remainingNumbers.values()).every(
+		const complete = Array.from(this.remainingNumbers.values()).every(
 			(count) => count === 0,
 		)
+		// if (complete) {
+		// 	this.handleGameWon() // Call handleGameWon when puzzle is complete
+		// }
+		return complete
 	}
 
 	async saveGame(): Promise<void> {
@@ -428,10 +515,7 @@ export class SudokuGame {
 			for (const [num, count] of gameState.remainingNumbers) {
 				this.remainingNumbers.set(Number(num), count)
 			}
-			// console.log(`getting siz: ${this.size}`)
-			// console.log(`getting sudo: ${JSON.stringify(gameState.sudoku)}`)
-			// console.log(`getting remnum: ${gameState.remainingNumbers}`)
-
+			
 			return true
 		} catch (error) {
 			console.error("Error loading game:", error)
