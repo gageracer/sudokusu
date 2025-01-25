@@ -50,7 +50,6 @@ export class SudokuGame {
 	async reload(size = 9) {
 		if (this.init) return
 		if (size !== this.size) {
-			// console.log("reload cange", size, this.size)
 			this.size = size
 			this.generateSudoku()
 			this.mistakes.current = 0

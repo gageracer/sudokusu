@@ -84,7 +84,6 @@ export async function loadStats(): Promise<Statistics | null> {
 export async function saveTime(time: TimeCount): Promise<void> {
 	try {
 		const plaintime = JSON.parse(JSON.stringify(time))
-		// console.log("plaintime", plaintime)
 		const db = await openDB()
 		return new Promise((resolve, reject) => {
 			const transaction = db.transaction(TIME_STORE, "readwrite")
