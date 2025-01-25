@@ -2,8 +2,11 @@
 import type { SudokuGame } from "../ts"
 
 let {
-	game = $bindable<SudokuGame>(),
-	highlightedNumber = $bindable<number | null>(null),
+	game = $bindable(),
+	highlightedNumber,
+}: {
+	game: SudokuGame
+	highlightedNumber: number | null
 } = $props()
 </script>
 

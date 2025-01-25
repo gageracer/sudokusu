@@ -2,10 +2,15 @@
 import type { SudokuGame } from "../ts"
 
 let {
-    game = $bindable<SudokuGame>(),
+    game = $bindable(),
     isPaused = $bindable(false),
     isWon = $bindable(false),
-    autoPauseTimeout = $bindable(30000), // 30 seconds default
+    autoPauseTimeout = 30000, // 30 seconds default
+}: {
+	game: SudokuGame
+	isPaused: boolean
+	isWon: boolean
+	autoPauseTimeout: number 
 } = $props()
 
 $effect(() => {

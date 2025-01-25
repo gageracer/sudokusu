@@ -28,6 +28,16 @@ function getStarDistribution(mode: GameMode) {
 		{ stars: 1, count: stats.oneStarGames },
 	]
 }
+
+function totalTime(currentMode: GameMode){
+  return formatTime(game.statistics.modes[currentMode].totalPlayTime) || "00:00"
+}
+
+function bestTime(currentMode: GameMode){
+  return game.statistics.modes[currentMode].fastestWin
+    ? formatTime(game.statistics.modes[currentMode].fastestWin)
+    : '--:--'
+}
 </script>
 
 <div class="space-y-6 text-gray-900 dark:text-white">
@@ -46,59 +56,40 @@ function getStarDistribution(mode: GameMode) {
         {/each}
     </div>
 
+
+    
+    <svelte:boundary>
+    {@const stat = game.statistics}
     <!-- Overall Stats -->
     {#if !currentMode}
         <div class="grid grid-cols-2 gap-4">
-            <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold mb-2">Total Games</h3>
-                <p class="text-2xl font-bold text-blue-500 dark:text-blue-400">
-                    {game.statistics.totalGamesWon}
-                </p>
-            </div>
-            <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold mb-2">Total Mistakes</h3>
-                <p class="text-2xl font-bold text-red-500 dark:text-red-400">
-                    {game.statistics.totalMistakes}
-                </p>
-            </div>
+            
+            {@render stats("Total Games",stat.totalGamesWon)}
+            {@render stats("Total Mistakes",stat.totalMistakes,"text-2xl font-bold text-red-500 dark:text-red-400")}
         </div>
     {:else}
     <!-- Mode Stats -->
             <div class="space-y-4">
                 <!-- Time Stats -->
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold mb-2">Best Time</h3>
-                        <p class="text-xl font-bold text-green-500 dark:text-green-400">
-                            {game.statistics.modes[currentMode].fastestWin 
-                                ? formatTime(game.statistics.modes[currentMode].fastestWin)
-                                : '--:--'}
-                        </p>
-                    </div>
-                    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold mb-2">Total Time</h3>
-                        <p class="text-xl font-bold">
-                            {formatTime(game.statistics.modes[currentMode].totalPlayTime) || "00:00"}
-                        </p>
-                    </div>
+                    {@render stats("Best Time",
+                      bestTime(currentMode),
+                      "text-xl font-bold text-green-500 dark:text-green-400")}
+                    {@render stats("Total Time",
+                      totalTime(currentMode),
+                      "text-xl font-bold")}
                 </div>
-    
+
                 <!-- Games Stats -->
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold mb-2">Games Won</h3>
-                        <p class="text-xl font-bold text-blue-500 dark:text-blue-400">
-                            {game.statistics.modes[currentMode].gamesWon}
-                        </p>
-                    </div>
-                    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold mb-2">Mistakes</h3>
-                        <p class="text-xl font-bold text-red-500 dark:text-red-400">
-                            {game.statistics.modes[currentMode].mistakes}
-                        </p>
-                    </div>
+                    {@render stats("Games Won",
+                      stat.modes[currentMode].gamesWon,
+                      "text-xl font-bold text-blue-500 dark:text-blue-400")}
+                    {@render stats("Mistakes",
+                      stat.modes[currentMode].mistakes,
+                      "text-xl font-bold text-red-500 dark:text-red-400")}
                 </div>
-    
+
                 <!-- Performance Distribution -->
                 <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <h3 class="font-bold mb-3">Performance</h3>
@@ -117,4 +108,16 @@ function getStarDistribution(mode: GameMode) {
                 </div>
             </div>
         {/if}
+    </svelte:boundary>
 </div>
+
+{#snippet stats(name:string,data:string|number, 
+    dataclass="text-2xl font-bold text-blue-500 dark:text-blue-400",
+    nameclass="font-bold mb-2")}
+    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h3 class={nameclass}>{name}</h3>
+        <p class={dataclass}>
+            {data}
+        </p>
+    </div>
+{/snippet}

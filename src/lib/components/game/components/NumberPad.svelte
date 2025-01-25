@@ -3,7 +3,7 @@ let {
 	size = $bindable<number>(),
 	isGuess = $bindable(false),
 	isMobile = $bindable(false),
-	highlightedNumber = $bindable<number | null>(null),
+	highlightedNumber = $bindable(null),
 	isNumberDisabled,
 	onNumberSelect,
 	onToggleGuess,

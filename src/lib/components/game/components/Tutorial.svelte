@@ -35,13 +35,13 @@ function handleNext() {
 <!-- Highlight current element -->
 {#if TUTORIAL_STEPS[currentStep].highlight}
     <TutorialHighlight
-        type={TUTORIAL_STEPS[currentStep].highlight?.type}
-        target={TUTORIAL_STEPS[currentStep].highlight?.target}
+        type={TUTORIAL_STEPS[currentStep].highlight!.type}
+        target={TUTORIAL_STEPS[currentStep].highlight!.target}
     />
 {/if}
 
 <!-- Tutorial Box -->
-<div class="fixed bottom-2 left-1/2 -translate-x-1/2 z-[100] w-[60%] max-w-sm">
+<div class="fixed bottom-1 left-1/2 -translate-x-1/2 z-[100] w-[70%] max-w-sm">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl 
                 p-4 border border-gray-200 dark:border-gray-600
                 transform transition-all duration-300">

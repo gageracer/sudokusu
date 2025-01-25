@@ -6,7 +6,6 @@ let darkMode = $state(false)
 const options = [2, 4, 6, 8, 9]
 const savedSize = localStorage.getItem("gamemode-size")
 if (savedSize && savedSize !== null) {
-	console.log("savedsize", savedSize)
 	size = JSON.parse(savedSize)
 }
 
