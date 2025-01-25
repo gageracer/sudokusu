@@ -70,10 +70,10 @@ $effect(() => {
             </div>
 
             <div class="flex flex-col gap-3">
-                {@render menuButton(onResume,"Resume Game","sky")}
-                {@render menuButton(() => showStats = true,"Statistics","green")}
-                {@render menuButton(onNewGame,"New Game","yellow")}
-                {@render menuButton(handleReset,"Reset Game","red")}
+                {@render menuButton(onResume,"Resume Game")}
+                {@render menuButton(() => showStats = true,"Statistics","rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors")}
+                {@render menuButton(onNewGame,"New Game","rounded bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700 transition-colors")}
+                {@render menuButton(handleReset,"Reset Game","rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors")}
             </div>
         {:else}
             <div class="flex justify-between items-center mb-6">
@@ -104,9 +104,9 @@ $effect(() => {
     </div>
 </div>
 
-{#snippet menuButton(onclick:()=> void, text:string, bgColor:string)}
+{#snippet menuButton(onclick:()=> void, text:string, btnclass = "rounded bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 transition-colors")}
     <button
-        class={`rounded bg-${bgColor}-600 px-4 py-2 text-white hover:bg-${bgColor}-700 transition-colors`}
+        class={btnclass}
         {onclick}
     >
         {text}
