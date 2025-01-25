@@ -105,7 +105,6 @@ $effect(() => {
 </div>
 
 {#snippet menuButton(onclick:()=> void, text:string, bgColor:string)}
-    {console.log(bgColor)}
     <button
         class={`rounded bg-${bgColor}-600 px-4 py-2 text-white hover:bg-${bgColor}-700 transition-colors`}
         {onclick}
