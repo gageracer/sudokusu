@@ -7,6 +7,7 @@ import {
 	type TimeCount,
 	type Statistics,
   DEFAULT_STATISTICS,
+  type gameState,
 } from "./types"
 import {
 	storeInIndexedDB,
@@ -60,7 +61,6 @@ export class SudokuGame {
 		}
 	}
 	async reset() {
-		// console.log("reset cange", this.size)
 		this.generateSudoku()
 		this.mistakes.current = 0
 		this.calculateRemainingNumbers()
@@ -163,7 +163,6 @@ export class SudokuGame {
 
 	private generateFullSolution(): Map<number, number> {
 		const solution = new Map<number, number>()
-		// console.log("gen size", this.size)
 		// Initialize empty grid
 		for (let y = 1; y <= this.size; y++) {
 			for (let x = 1; x <= this.size; x++) {
@@ -383,7 +382,6 @@ export class SudokuGame {
 		return result
 	}
 
-	// Add method to get numbers already in a box
 	getUsedNumbersInBox(x: number, y: number): Set<number> {
 		const boxStartX =
 			Math.floor((x - 1) / this.boxSize.width) * this.boxSize.width + 1
@@ -422,6 +420,7 @@ export class SudokuGame {
 			}
 		}
 	}
+	
 	getBoxBorders(x: number, y: number) {
 		const boxRow = Math.floor((y - 1) / this.boxSize.height)
 		const boxCol = Math.floor((x - 1) / this.boxSize.width)
@@ -432,7 +431,6 @@ export class SudokuGame {
 		}
 	}
 	
-	// Add a new method to check and handle completion
 	async checkAndHandleCompletion(): Promise<boolean> {
 		const complete = this.isPuzzleComplete()
 		if (complete) {
@@ -446,9 +444,6 @@ export class SudokuGame {
 		const complete = Array.from(this.remainingNumbers.values()).every(
 			(count) => count === 0,
 		)
-		// if (complete) {
-		// 	this.handleGameWon() // Call handleGameWon when puzzle is complete
-		// }
 		return complete
 	}
 
@@ -466,15 +461,13 @@ export class SudokuGame {
 			]),
 			remainingNumbers: Array.from(this.remainingNumbers.entries()),
 		}
-		// console.log(`setting siz: ${gameState.size}`)
-		// console.log(`setting sudo: ${gameState.sudoku}`)
-		// console.log(`setting remnum: ${gameState.remainingNumbers}`)
+
 		await storeInIndexedDB(GAME_STORE, gameState)
 	}
 
 	async loadGame(): Promise<boolean> {
 		try {
-			const gameState = await fetchFromIndexedDB(GAME_STORE)
+			const gameState = await fetchFromIndexedDB(GAME_STORE)as gameState
 			if (!gameState) {
 				this.reset()
 				return false
@@ -528,13 +521,3 @@ export class SudokuGame {
 		await saveTime(this.time)
 	}
 }
-
-// const GAME_KEY = Symbol(GAME)
-
-// export function initGame(size = 9) {
-// 	browser && setContext(GAME_KEY, new SudokuGame(size))
-// }
-
-// export function getGame() {
-// 	return browser ? getContext<SudokuGame>(GAME_KEY) : new SudokuGame(9)
-// }

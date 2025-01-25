@@ -1,6 +1,5 @@
 <script lang="ts">
-import type { SudokuCell } from "./ts"
-import { SudokuGame } from "./ts"
+import { SudokuGame, type SudokuCell } from "./ts"
 import { browser } from "$app/environment"
 import Timer from "./components/Timer.svelte"
 import GameMenu from "./components/GameMenu.svelte"
@@ -64,11 +63,13 @@ let usedNumbersInBox = $derived(
 		: new Set<number>(),
 )
 
+
+
 function handleNewGame(selectedSize: GameMode) {
 	size = selectedSize
 	handleReset()
 	showMenu = false
-
+	isPaused = false
 	// Start tutorial if it's never been completed
 	if (localStorage.getItem("tutorial-completed") !== "true") {
 		showTutorial = true
@@ -117,7 +118,7 @@ function handleGridClick() {
 }
 
 function handleNextDifficulty() {
-	const difficulties = [2, 4, 6, 8, 9]
+	const difficulties: GameMode[] = [2, 4, 6, 8, 9]
 	const currentIndex = difficulties.indexOf(size)
 	if (currentIndex < difficulties.length - 1) {
 		size = difficulties[currentIndex + 1]
@@ -243,7 +244,7 @@ function isNumberDisabled(num: number): boolean {
 
 <RemainingNumbers
     {game}
-    bind:highlightedNumber
+    {highlightedNumber}
 />
 
 <!-- Add a win message with reset option -->
@@ -279,7 +280,7 @@ function isNumberDisabled(num: number): boolean {
          onReset={handleReset}
          onNewGame={() => {
                     showMenu = true
-                    isPaused = false
+                    isPaused = true
                 }}
          onResume={() => {
              isPaused = false

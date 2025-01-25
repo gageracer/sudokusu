@@ -1,19 +1,27 @@
 <script lang="ts">
-import type { SudokuCell } from "../ts"
-import type { SudokuGame } from "../ts"
+import type { SudokuCell, SudokuGame } from "../ts"
 
 let {
-	game = $bindable<SudokuGame>(),
+	game = $bindable(),
 	isGuess = $bindable(false),
-	selectedCell = $bindable<SudokuCell | null>(null),
-	highlightedNumber = $bindable<number | null>(null),
+	selectedCell = $bindable(null),
+	highlightedNumber = $bindable(null),
 	onKeydown,
 	onGridClick,
 	onCellClick,
 	onToggleGuess,
+}: {
+	game: SudokuGame
+	isGuess: boolean
+	selectedCell: SudokuCell | null
+	highlightedNumber: number | null
+	onKeydown: (event: KeyboardEvent) => void
+	onGridClick: () => void
+	onCellClick: (cell:SudokuCell) => void
+	onToggleGuess: () => void
 } = $props()
 
-function getCellClasses(cell: SudokuCell,isSelected: boolean): string {
+function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
 	const baseClasses = [
 		"aspect-square",
 		"w-full",

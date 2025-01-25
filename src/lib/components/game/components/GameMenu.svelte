@@ -26,7 +26,6 @@ const difficulties: { size: GameMode; label: string }[] = [
 	{ size: 9, label: "9×9 - Expert" },
 ]
 
-let showDifficultySelect = $state(false)
 </script>
 
 <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">

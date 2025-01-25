@@ -1,4 +1,11 @@
-export const TUTORIAL_STEPS = [
+export const TUTORIAL_STEPS: {
+	title: string
+	message: string
+	highlight?: {
+		type: 'cell' | 'number' | 'button' | 'area'
+		target: string|number
+	}
+}[] = [
 	{
 		title: "Welcome to Sudoku!",
 		message:
@@ -12,7 +19,7 @@ export const TUTORIAL_STEPS = [
 	{
 		title: "Select a Cell",
 		message:
-			"Click any empty cell to begin. Empty cells are where you'll enter numbers.",
+			"Click any empty cell to begin. Blue border means selecting. Empty cells are where you'll enter numbers.",
 		highlight: { type: "cell", target: "empty" },
 	},
 	{
@@ -23,13 +30,13 @@ export const TUTORIAL_STEPS = [
 	{
 		title: "Taking Notes",
 		message:
-			"Not sure which number goes here? Click the pencil button (or press C) to enter multiple possibilities.",
+			"Not sure which number goes here? Click the ? button (or press C) to enter multiple possibilities. Or you can double click the cells. Green border means guessing.",
 		highlight: { type: "button", target: "guess-mode" },
 	},
 	{
 		title: "Mistakes",
 		message:
-			"Wrong numbers will show in red. Don't worry - everyone makes mistakes! Try to keep them low for a better score.",
+			"Wrong numbers will show in red. Don't worry - everyone makes mistakes! You can remove the mistake by using the delete (or press D) option after selecting the cell. Try to keep them low for a better score.",
 	},
 	{
 		title: "Stars",

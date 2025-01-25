@@ -6,6 +6,22 @@ export const TIME_STORE = "timeState"
 export const STATS_STORE = "statsState"
 const DB_VERSION = 2
 
+
+export type gameStateType = {
+    size: number;
+    mistakes: MistakeCount;
+    sudoku: (number | {
+        guess: number[];
+        x: number;
+        y: number;
+        val: number;
+        isFixed: boolean;
+        isValid: boolean;
+        solution: number;
+    })[][];
+    remainingNumbers: [number,number][];
+} 
+
 async function openDB(): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
 		const request = indexedDB.open(DB_NAME, DB_VERSION)
@@ -29,7 +45,6 @@ async function openDB(): Promise<IDBDatabase> {
 	})
 }
 
-// Add new functions for statistics
 export async function saveStats(stats: Statistics): Promise<void> {
     try {
         const plainStats = JSON.parse(JSON.stringify(stats))
@@ -65,7 +80,7 @@ export async function loadStats(): Promise<Statistics | null> {
         return null
     }
 }
-// Specific function for saving time
+
 export async function saveTime(time: TimeCount): Promise<void> {
 	try {
 		const plaintime = JSON.parse(JSON.stringify(time))
@@ -85,7 +100,6 @@ export async function saveTime(time: TimeCount): Promise<void> {
 	}
 }
 
-// Specific function for loading time
 export async function loadTime(): Promise<TimeCount> {
 	try {
 		const db = await openDB()
@@ -106,7 +120,7 @@ export async function loadTime(): Promise<TimeCount> {
 
 export async function storeInIndexedDB(
 	key: string,
-	value: gameState | Statistics,
+	value: gameStateType | Statistics,
 ): Promise<void> {
 	try {
 		const plainValue = JSON.parse(JSON.stringify(value))
@@ -125,7 +139,7 @@ export async function storeInIndexedDB(
 	}
 }
 
-export async function fetchFromIndexedDB(key: string): Promise<gameState | Statistics> {
+export async function fetchFromIndexedDB(key: string): Promise<gameStateType | Statistics> {
 	try {
 		const db = await openDB()
 		return new Promise((resolve, reject) => {

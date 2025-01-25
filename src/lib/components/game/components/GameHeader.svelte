@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { SudokuGame } from "../ts"
-	import { formatTime } from "../utils/formatTime";
+import { formatTime } from "../utils/formatTime";
 
 let {
 	game = $bindable(),
