@@ -1,25 +1,27 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 
 let {
-    game = $bindable(),
     isPaused = $bindable(false),
     isWon = $bindable(false),
-    autoPauseTimeout = 30000, // 30 seconds default
+    showTutorial = $bindable(false),
+    autoPauseTimeout = 30, // 30 seconds default
 }: {
-	game: SudokuGame
 	isPaused: boolean
 	isWon: boolean
+	showTutorial: boolean
 	autoPauseTimeout: number 
 } = $props()
+
+const game = getSudokusuContent()
 
 $effect(() => {
     if (!isPaused) {
         const checkInactivity = setInterval(() => {
-            if (!isWon) {
+            if (!isWon || !showTutorial) {
                 game.updateTime()
                 const timeSinceLastInteraction = Date.now() - game.lastInteractionTime
-                if (timeSinceLastInteraction >= autoPauseTimeout) {
+                if (timeSinceLastInteraction >= autoPauseTimeout * 1000) {
                     isPaused = true
                 }
             }

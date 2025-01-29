@@ -29,7 +29,7 @@ export class SudokuGame {
 	sudoku: SvelteMap<number, SudokuCell> = new SvelteMap()
 	mistakes: MistakeCount = $state({ current: 0, total: 0 })
 	statistics: Statistics = $state(DEFAULT_STATISTICS)
-	size = $state(0)
+	size: GameMode | 0 = $state(0)
 	init = $state(true)
 	time: TimeCount = $state({ timeElapsed: 0, totalTime: 0 })
 	lastInteractionTime = $state(Date.now())
@@ -363,8 +363,11 @@ export class SudokuGame {
 		}
 	}
 
-	isValid(x: number, y: number, num: number): boolean {
-		const id = this.size * (y - 1) + x
+	cellID(x: number, y: number):number {
+	return this.size * (y - 1) + x
+	}
+	
+	isValid(id:number, num: number): boolean {
 		const cell = this.sudoku.get(id)
 		const result = cell?.solution === num
 

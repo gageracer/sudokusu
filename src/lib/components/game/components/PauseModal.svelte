@@ -1,24 +1,24 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 import StatisticsView from "./StatisticView.svelte"
 
 let {
-	game = $bindable(),
 	darkMode = $bindable(false),
 	onResume,
 	onReset,
 	onNewGame,
 	onEnableTutorial,
 }: {
-	game: SudokuGame
 	darkMode: boolean
 	onResume: () => void
 	onReset: () => void
 	onNewGame: () => void
 	onEnableTutorial: () => void
 } = $props()
+
+const game = getSudokusuContent()
 
 let showStats = $state(false)
 let currentMode: GameMode | null = $state(null)
@@ -39,7 +39,7 @@ $effect(() => {
 
 <div class="fixed inset-0 z-40 bg-transparent"></div>
 <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto p-6 rounded-lg text-center min-w-[300px] max-w-2xl w-full mx-4">
+    <div class="bg-yellow-50 dark:bg-gray-800 max-h-[90vh] overflow-y-auto p-6 rounded-lg text-center min-w-[300px] max-w-2xl w-full mx-4">
         {#if !showStats}
             <h2 class="text-xl font-bold mb-4 dark:text-white">Game Paused</h2>
             <div class="text-sm mb-4 dark:text-gray-300">
@@ -89,7 +89,6 @@ $effect(() => {
             </div>
 
             <StatisticsView
-                {game}
                 bind:currentMode
             />
 

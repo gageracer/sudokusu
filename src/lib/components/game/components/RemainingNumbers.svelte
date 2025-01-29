@@ -1,13 +1,13 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 
 let {
-	game = $bindable(),
 	highlightedNumber,
 }: {
-	game: SudokuGame
 	highlightedNumber: number | null
 } = $props()
+
+const game = getSudokusuContent()
 </script>
 
 <div class="mb-4 flex justify-center gap-4">
