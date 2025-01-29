@@ -22,13 +22,15 @@ const AUTO_PAUSE_TIMEOUT = 60 // 30 seconds
 
 let gridRef: HTMLDivElement
 let isWon = $state(false)
-let isGuess = $state(false)
 let showMenu = $state(true)
 
 let {
 	size = $bindable(),
 	darkMode = $bindable(false),
-}: { size: GameMode; darkMode?: boolean } = $props()
+	isGuess = $bindable(false),
+}: { size: GameMode; darkMode?: boolean; isGuess?: boolean} = $props()
+
+const sendGuess = $derived(isGuess)
 
 let isMobile = $derived(
 	browser &&
