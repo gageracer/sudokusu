@@ -1,20 +1,20 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 import StatisticsView from "../components/StatisticView.svelte"
 
 let {
-	game = $bindable(),
 	isWon = false,
 	onNewGame,
 	onContinue,
 }: {
-	game: SudokuGame
 	isWon: boolean
 	onNewGame: (size: GameMode) => void
 	onContinue: () => void
 } = $props()
+
+const game = getSudokusuContent()
 
 let showStats = $state(false)
 let currentMode: GameMode | null = $state(null)
@@ -29,7 +29,7 @@ const difficulties: { size: GameMode; label: string }[] = [
 </script>
 
 <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
+    <div class="bg-yellow-50 dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
         {#if !showStats}
             <h1 class="text-3xl font-bold mb-6">Sudoku</h1>
 
@@ -61,8 +61,8 @@ const difficulties: { size: GameMode; label: string }[] = [
                     <div class="grid grid-cols-1 gap-2">
                         {#each difficulties as {size, label}}
                             <button
-                                class="w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 rounded-lg
-                                       hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                class="w-full py-2 px-4 bg-yellow-300 dark:bg-gray-700 rounded-lg
+                                       hover:bg-yellow-500 dark:hover:bg-gray-600 transition-colors"
                                 onclick={() => onNewGame(size)}
                             >
                                 {label}
@@ -101,7 +101,6 @@ const difficulties: { size: GameMode; label: string }[] = [
                 </button>
             </div>
             <StatisticsView
-                {game}
                 bind:currentMode
             />
         {/if}

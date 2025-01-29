@@ -1,20 +1,28 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 import { formatTime } from "../utils/formatTime";
 
 let {
-	game = $bindable(),
 	isPaused = $bindable(false),
 }: {
-	game: SudokuGame
 	isPaused: boolean
 } = $props()
 
-
+const game = getSudokusuContent()
 </script>
 
 <div class="mb-4 flex justify-between items-center dark:text-white">
-    <div>Mistakes: {game.mistakes.current} | Total: {game.mistakes.total}</div>
+    <div class="flex items-center flex-col">
+            <span>Mistakes: {game.mistakes.current}</span>
+            <div class="flex gap-1">
+                {#each Array(game.getStars(game.mistakes.current)) as _}
+                    <span class="text-yellow-400 dark:text-yellow-500">★</span>
+                {/each}
+                {#each Array(4 - game.getStars(game.mistakes.current)) as _}
+                    <span class="text-gray-300 dark:text-gray-600">★</span>
+                {/each}
+            </div>
+        </div>
     <div>Time: {formatTime(game.time.timeElapsed)}</div>
     <div class="flex gap-2">
         <button

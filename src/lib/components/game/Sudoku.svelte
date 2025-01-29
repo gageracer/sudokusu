@@ -1,5 +1,5 @@
 <script lang="ts">
-import { SudokuGame, type SudokuCell } from "./ts"
+import { getSudokusuContent, setSudokusuContent, SudokuGame, type SudokuCell } from "./ts"
 import { browser } from "$app/environment"
 import Timer from "./components/Timer.svelte"
 import GameMenu from "./components/GameMenu.svelte"
@@ -16,8 +16,9 @@ import {
 	type KeyboardHandlers,
 } from "./utils/keyboardControls"
 import type { GameMode } from "./ts/types"
+import { SvelteSet } from "svelte/reactivity"
 
-const AUTO_PAUSE_TIMEOUT = 30000 // 30 seconds
+const AUTO_PAUSE_TIMEOUT = 60 // 30 seconds
 
 let gridRef: HTMLDivElement
 let isWon = $state(false)
@@ -48,7 +49,8 @@ function handleTutorialSkip() {
 	localStorage.setItem("tutorial-completed", "true")
 }
 
-const game = new SudokuGame()
+setSudokusuContent()
+const game = getSudokusuContent()
 
 if (game.size !== 0 && game.size !== size) {
 	size = game.size
@@ -56,14 +58,20 @@ if (game.size !== 0 && game.size !== size) {
 
 let isPaused = $state(true)
 let highlightedNumber: number | null = $state(null)
-let selectedCell: SudokuCell | null = $state(null)
+let selectedCell: SudokuCell = $state({
+	x: 0,
+	y: 0,
+	guess: new SvelteSet([]),
+	val: 0,
+	isFixed: false,
+	isValid: false,
+	solution: 0,
+})
 let usedNumbersInBox = $derived(
-	selectedCell
+	selectedCell.x !== 0
 		? game.getUsedNumbersInBox(selectedCell.x, selectedCell.y)
 		: new Set<number>(),
 )
-
-
 
 function handleNewGame(selectedSize: GameMode) {
 	size = selectedSize
@@ -81,10 +89,9 @@ function handleContinueGame() {
 	isPaused = false
 }
 
-$inspect("sudoku", size)
 $effect(() => {
 	if (size !== game.size) {
-		selectedCell = null
+		selectedCell.x = 0
 		highlightedNumber = null
 		game.reload(size)
 	}
@@ -93,7 +100,15 @@ $effect(() => {
 function handleReset() {
 	game.reset()
 	game.time.timeElapsed = 0
-	selectedCell = null
+	selectedCell = {
+		x: 0,
+		y: 0,
+		guess: new SvelteSet([]),
+		val: 0,
+		isFixed: false,
+		isValid: false,
+		solution: 0,
+	}
 	highlightedNumber = null
 	isPaused = false
 	isWon = false
@@ -124,7 +139,6 @@ function handleNextDifficulty() {
 	}
 	handleReset()
 }
-
 // Handle keyboard input
 function handleKeydown(event: KeyboardEvent) {
 	const handlers: KeyboardHandlers = {
@@ -132,12 +146,12 @@ function handleKeydown(event: KeyboardEvent) {
 		onToggleGuess: toggleGuessMode,
 		onTogglePause: () => (isPaused = !isPaused),
 		onMoveCursor: (moveX, moveY) => {
-			if (!selectedCell) return
+			if (!selectedCell || selectedCell.x === 0) return
 
 			const x = selectedCell.x
 			const y = selectedCell.y
-
-			const newCell = game.sudoku.get(size * (y + moveY - 1) + (x + moveX))
+			
+			const newCell = game.sudoku.get(game.cellID(x+moveX,y+moveY))
 
 			if (newCell) {
 				handleCellClick(newCell)
@@ -158,78 +172,100 @@ function handleCellClick(cell: SudokuCell) {
 	}
 
 	// Always allow selection of any cell
-	selectedCell = cell
+	selectedCell = {
+		x: cell.x,
+		y: cell.y,
+		guess: cell.guess,
+		val: cell.val,
+		isFixed: cell.isFixed,
+		isValid: cell.isValid,
+		solution: cell.solution,
+	}
 }
 
 async function handleNumberSelect(num: number) {
-	if (isPaused) return
-	game.updateInteraction()
-	highlightedNumber = num || null
+    if (isPaused) return
+    game.updateInteraction()
 
-	if (!selectedCell) return
+    if (!selectedCell || selectedCell.x === 0) return
 
-	// If selected cell is fixed, don't modify it
-	if (selectedCell.isFixed) return
+    // If selected cell is fixed, don't modify it  
+    if (selectedCell.isFixed) return
 
-	const isValidGuess =
-		!isGuess && (num === 0 || game.isValid(selectedCell.x, selectedCell.y, num))
-	const id = size * (selectedCell.y - 1) + selectedCell.x
-	const cell = game.sudoku.get(id)
+    const id = game.cellID(selectedCell.x, selectedCell.y)
+    const cell = game.sudoku.get(id)
 
-	if (cell) {
-		if (isGuess) {
-			cell.guess?.has(num) ? cell.guess?.delete(num) : cell.guess?.add(num)
-		} else {
-			cell.val = num
-			// Always update isValid
-			cell.isValid = isValidGuess
-			// Only make it fixed if it's a correct guess
-			if (isValidGuess && num !== 0) {
-				cell.isFixed = true
-				cell.guess?.clear()
-				game.updateGuessesInBox(selectedCell.x, selectedCell.y, num)
-			} else {
-				// Ensure cell stays unfixed if wrong or erased
-				cell.isFixed = false
-			}
-		}
-	}
-	// Check completion after state updates
-	const isComplete = await game.checkAndHandleCompletion()
-	if (isComplete) {
-		selectedCell = null
-		highlightedNumber = null
-		isWon = true
-	}
+    if (cell) {
+        if (isGuess) {
+            cell.guess?.has(num) ? cell.guess?.delete(num) : cell.guess?.add(num)
+        } else {
+            cell.val = num
+            // Always update isValid
+            const isValidGuess = num === 0 || game.isValid(id, num)
+            cell.isValid = isValidGuess
+            // Only make it fixed if it's a correct guess
+            if (isValidGuess && num !== 0) {
+                cell.isFixed = true 
+                cell.guess?.clear()
+                game.updateGuessesInBox(selectedCell.x, selectedCell.y, num)
+            } else {
+                // Ensure cell stays unfixed if wrong or erased
+                cell.isFixed = false
+            }
+            
+            // Force a reactive update by accessing selectedCell
+            selectedCell = {
+                ...selectedCell,
+                val: cell.val,
+                isFixed: cell.isFixed,
+                isValid: cell.isValid
+            };
+        }
+    }
 
-	game.saveGame()
+    highlightedNumber = num || null
+    // Check completion after state updates
+    const isComplete = await game.checkAndHandleCompletion()
+    if (isComplete) {
+        selectedCell = {
+            x: 0,
+            y: 0,
+            guess: new SvelteSet([]),
+            val: 0,
+            isFixed: false,
+            isValid: false,
+            solution: 0
+        }
+        highlightedNumber = null
+        isWon = true
+    }
+
+    game.saveGame()
 }
 
 function isNumberDisabled(num: number): boolean {
-	if (!selectedCell) return false
+	if (!selectedCell || selectedCell.x === 0) return false
 	return usedNumbersInBox.has(num)
 }
 </script>
 
 {#if showTutorial && !showMenu && !isPaused}
     <Tutorial
-        {game}
         onComplete={handleTutorialComplete}
         onSkip={handleTutorialSkip}
     />
 {/if}
 
 <Timer
-    {game}
     bind:isPaused
     bind:isWon
+    bind:showTutorial
     autoPauseTimeout={AUTO_PAUSE_TIMEOUT}
 />
 
 <!-- Add Menu component -->
 {#if showMenu}
     <GameMenu
-        {game}
         {isWon}
         onNewGame={handleNewGame}
         onContinue={handleContinueGame}
@@ -237,19 +273,16 @@ function isNumberDisabled(num: number): boolean {
 {/if}
 
 <GameHeader
-    {game}
     bind:isPaused
 />
 
 <RemainingNumbers
-    {game}
     {highlightedNumber}
 />
 
 <!-- Add a win message with reset option -->
 {#if isWon && !showMenu}
     <WinModal
-        {game}
         {size}
         onReset={handleReset}
         onNextDifficulty={handleNextDifficulty}
@@ -261,10 +294,9 @@ function isNumberDisabled(num: number): boolean {
 
 <!-- Sudoku grid -->
 <SudokuGrid
-    {game}
-    bind:isGuess
+    {isGuess}
     bind:selectedCell
-    bind:highlightedNumber
+    {highlightedNumber}
     onKeydown={handleKeydown}
     onGridClick={handleGridClick}
     onCellClick={handleCellClick}
@@ -274,7 +306,6 @@ function isNumberDisabled(num: number): boolean {
  <!-- Pause Overlay -->
  {#if isPaused && !isWon && !showMenu}
      <PauseModal
-         {game}
          bind:darkMode
          onReset={handleReset}
          onNewGame={() => {

@@ -1,27 +1,27 @@
 <script lang="ts">
-import type { SudokuCell, SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuCell, type SudokuGame } from "../ts"
 
 let {
-	game = $bindable(),
 	isGuess = $bindable(false),
 	selectedCell = $bindable(null),
-	highlightedNumber = $bindable(null),
+	highlightedNumber = null,
 	onKeydown,
 	onGridClick,
 	onCellClick,
 	onToggleGuess,
 }: {
-	game: SudokuGame
 	isGuess: boolean
 	selectedCell: SudokuCell | null
 	highlightedNumber: number | null
 	onKeydown: (event: KeyboardEvent) => void
 	onGridClick: () => void
-	onCellClick: (cell:SudokuCell) => void
+	onCellClick: (cell: SudokuCell) => void
 	onToggleGuess: () => void
 } = $props()
 
-function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
+const game = getSudokusuContent()
+
+function getCellClasses(cell: SudokuCell): string {
 	const baseClasses = [
 		"aspect-square",
 		"w-full",
@@ -31,7 +31,6 @@ function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
 		"border",
 		"border-gray-300 dark:border-gray-600",
 		"focus:outline-none",
-		cell.isFixed ? "" : "focus:bg-blue-50 dark:focus:bg-blue-900",
 	]
 
 	const borderClasses = [
@@ -59,7 +58,7 @@ function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
 				: "dark:text-white"
 
 	const bgClasses = [
-		cell.isFixed ? "bg-gray-100 dark:bg-gray-700" : "bg-white dark:bg-gray-800",
+		cell.isFixed ? "bg-gray-200 dark:bg-gray-700" : "bg-yellow-50/5 dark:bg-gray-800",
 		highlightedNumber === cell.val && cell.val !== 0
 			? "bg-yellow-100 dark:bg-yellow-900"
 			: "",
@@ -80,7 +79,7 @@ function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
 </script>
 
 <div
-    class="mx-auto grid gap-0 relative rounded-md border border-gray-300 dark:border-gray-600 {isGuess ? 'border-green-400 dark:border-green-600':''}"
+    class="mx-auto grid gap-0 relative rounded-md border border-gray-500 dark:border-gray-600 {isGuess ? 'border-green-500 dark:border-green-600':''}"
     style:grid-template-columns={`repeat(${game.size}, minmax(0, 1fr))`}
     style:max-width="500px"
     onkeydown={onKeydown}
@@ -89,12 +88,12 @@ function getCellClasses(cell: SudokuCell, isSelected: boolean): string {
     tabindex="0"
 >
     {#each game.sudoku.values() as cell}
-        <div data-cell={`${cell.x}-${cell.y}`} class="relative {getCellClasses(cell,selectedCell === cell)}">
+        <div data-cell={`${cell.x}-${cell.y}`} class="relative {getCellClasses(cell)}">
             <input
                 readonly
-                value={cell.guess.size > 0 && !cell.val ? '' : cell.val || ''}
+                value={cell.guess.size > 0 && !cell.val ? "" : cell.val || ""}
                 data-fixed={cell.isFixed}
-                class={getCellClasses(cell,selectedCell === cell)}
+                class={getCellClasses(cell)}
                 ondblclick={onToggleGuess}
                 onclick={() => onCellClick(cell)}
             />

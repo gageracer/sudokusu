@@ -1,15 +1,15 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 
 let {
-	game = $bindable(),
 	currentMode = $bindable(),
 }: {
-	game: SudokuGame
 	currentMode: GameMode | null
 } = $props()
+
+const game = getSudokusuContent()
 
 const difficulties: { size: GameMode; label: string }[] = [
 	{ size: 2, label: "2×2 Tutorial" },
@@ -47,8 +47,8 @@ function bestTime(currentMode: GameMode){
             <button
                 class="px-3 py-1 rounded-full text-sm transition-colors
                     {currentMode === size
-                        ? 'bg-blue-500 dark:bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}"
+                        ? 'bg-yellow-500 dark:bg-blue-600 text-white'
+                        : 'bg-yellow-200  dark:bg-gray-700 hover:bg-yellow-400  dark:hover:bg-gray-600'}"
                 onclick={() => currentMode = size}
             >
                 {label}
@@ -91,7 +91,7 @@ function bestTime(currentMode: GameMode){
                 </div>
 
                 <!-- Performance Distribution -->
-                <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="bg-yellow-300/25 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <h3 class="font-bold mb-3">Performance</h3>
                     <div class="space-y-2">
                         {#each getStarDistribution(currentMode) as { stars, count }}
@@ -114,7 +114,7 @@ function bestTime(currentMode: GameMode){
 {#snippet stats(name:string,data:string|number, 
     dataclass="text-2xl font-bold text-blue-500 dark:text-blue-400",
     nameclass="font-bold mb-2")}
-    <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div class="bg-yellow-300/25 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h3 class={nameclass}>{name}</h3>
         <p class={dataclass}>
             {data}

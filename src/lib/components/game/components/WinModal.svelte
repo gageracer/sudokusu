@@ -1,21 +1,21 @@
 <script lang="ts">
-import type { SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 
 let {
-	game = $bindable(),
 	size = $bindable(),
 	onReset,
 	onNextDifficulty,
 	onShowMenu,
 }: {
-	game: SudokuGame
 	size: GameMode
 	onReset: () => void
 	onNextDifficulty: (size: GameMode) => void
 	onShowMenu: () => void
 } = $props()
+
+const game = getSudokusuContent()
 
 const stars = game.getStars(game.mistakes.current)
 const modeStats = game.statistics.modes[size]

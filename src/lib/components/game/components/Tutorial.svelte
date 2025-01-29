@@ -1,13 +1,13 @@
 <script lang="ts">
 import { TUTORIAL_STEPS } from "../ts/tutorial.ts"
-import { SudokuGame } from "../ts"
+import { getSudokusuContent, SudokuGame } from "../ts"
 import TutorialHighlight from "./TutorialHighlight.svelte"
 let {
-	game = $bindable(),
 	onComplete,
 	onSkip,
-}: { game: SudokuGame; onComplete: () => void; onSkip: () => void } = $props()
+}: { onComplete: () => void; onSkip: () => void } = $props()
 
+const game = getSudokusuContent()
 let currentStep = $state(0)
 
 const stepGroups = [
