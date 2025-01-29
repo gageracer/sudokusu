@@ -240,6 +240,7 @@ async function handleNumberSelect(num: number) {
         }
         highlightedNumber = null
         isWon = true
+        isPaused = true
     }
 
     game.saveGame()
