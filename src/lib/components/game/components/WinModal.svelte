@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fade, fly } from "svelte/transition";
 import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
@@ -30,8 +31,8 @@ const averageTime =
 const timeImprovement = averageTime ? averageTime - game.time.timeElapsed : null
 </script>
 
-<div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
+<div  transition:fade={{duration: 500}} class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
+    <div  in:fly|global={{y:300}} out:fly|global={{y:-300}} class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">Congratulations!</h2>
 
         <!-- Stars Display -->
