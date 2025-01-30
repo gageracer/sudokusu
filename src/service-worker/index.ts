@@ -12,8 +12,6 @@ const CACHE = `game-sudokusu-${version ? version : ""}`
 const ASSETS = [
 	...build, // the app itself
 	...files, // everything in `static`
-	"/", // Add root path
-	"/manifest.json",
 ]
 
 sw.addEventListener("install", (event: ExtendableEvent) => {

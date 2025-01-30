@@ -18,7 +18,7 @@ const config = {
 			name: Date.now().toString(),
 
 			// if undefined, no polling will occur
-			pollInterval: 5000
+			pollInterval: 30000
 		}
 	}
 };
