@@ -31,7 +31,7 @@ const averageTime =
 const timeImprovement = averageTime ? averageTime - game.time.timeElapsed : null
 </script>
 
-<div  transition:fade={{duration: 500}} class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
+<div  transition:fade={{duration: 200}} class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
     <div  in:fly|global={{y:300}} out:fly|global={{y:-300}} class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">Congratulations!</h2>
 
