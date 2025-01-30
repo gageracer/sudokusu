@@ -3,6 +3,7 @@ import { getSudokusuContent, type SudokuGame } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 import StatisticsView from "../components/StatisticView.svelte"
+import { fly } from "svelte/transition"
 
 let {
 	isWon = false,
@@ -25,11 +26,10 @@ const difficulties: { size: GameMode; label: string }[] = [
 	{ size: 8, label: "8×8 - Hard" },
 	{ size: 9, label: "9×9 - Expert" },
 ]
-
 </script>
 
 <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
-    <div class="bg-yellow-50 dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
+    <div in:fly|global={{x:-200}} out:fly|global={{x:200}} class="bg-yellow-50 dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
         {#if !showStats}
             <h1 class="text-3xl font-bold mb-6">Sudoku</h1>
 

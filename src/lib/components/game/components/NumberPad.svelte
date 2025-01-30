@@ -15,7 +15,7 @@ let {
         <button
             data-numpad={number}
             class="aspect-square rounded-md border border-gray-500 dark:border-gray-600 text-xl dark:text-white font-bold grid place-items-center relative
-            {highlightedNumber === number ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-yellow-50/5 dark:bg-gray-800'}
+            {highlightedNumber === number ? 'bg-yellow-100 dark:bg-yellow-900' : ' bg-white dark:bg-gray-800'}
             {isNumberDisabled(number)
                 ? 'cursor-not-allowed opacity-25'
                 : 'hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700'}"

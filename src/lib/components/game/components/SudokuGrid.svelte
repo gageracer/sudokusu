@@ -58,7 +58,7 @@ function getCellClasses(cell: SudokuCell): string {
 				: "dark:text-white"
 
 	const bgClasses = [
-		cell.isFixed ? "bg-gray-200 dark:bg-gray-700" : "bg-yellow-50/5 dark:bg-gray-800",
+		cell.isFixed ? "bg-gray-200 dark:bg-gray-700" : "bg-white dark:bg-gray-800",
 		highlightedNumber === cell.val && cell.val !== 0
 			? "bg-yellow-100 dark:bg-yellow-900"
 			: "",

@@ -25,6 +25,7 @@ export interface SudokuCell {
 
 export type gameState = {
 	size: number
+	autoPause: number
 	sudoku: [number, SudokuCell][]
 	remainingNumbers: [number, number][]
 	mistakes: MistakeCount
