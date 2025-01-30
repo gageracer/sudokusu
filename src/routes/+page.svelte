@@ -18,7 +18,7 @@ $effect(() => {
 </script>
 
 <div class="min-h-screen transition-colors" class:dark={darkMode}>
-    <div class="min-h-screen mx-auto p-4 {isGuess ? 'bg-green-50/25 dark:bg-[#08130b]': 'bg-yellow-50/25 dark:bg-gray-900'}">
+    <div class="min-h-screen mx-auto p-4 {isGuess ? 'bg-green-50 dark:bg-[#08130b]': 'bg-yellow-50 dark:bg-gray-900'}">
 
 
     	<Sudoku bind:size bind:darkMode bind:isGuess />
@@ -28,6 +28,6 @@ $effect(() => {
 <style>
 /* Add smooth transitions */
 div {
-    transition: all 200ms ease-in-out;
+    transition: all 500ms ease-in-out;
 }
 </style>
