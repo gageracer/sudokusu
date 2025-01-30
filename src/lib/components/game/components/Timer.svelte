@@ -21,7 +21,7 @@ $effect(() => {
             if (!isWon || !showTutorial) {
                 game.updateTime()
                 const timeSinceLastInteraction = Date.now() - game.lastInteractionTime
-                if (timeSinceLastInteraction >= autoPauseTimeout * 1000) {
+                if (autoPauseTimeout !== 0 && timeSinceLastInteraction >= autoPauseTimeout * 1000) {
                     isPaused = true
                 }
             }

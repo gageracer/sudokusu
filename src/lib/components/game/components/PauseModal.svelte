@@ -22,7 +22,7 @@ const game = getSudokusuContent()
 
 let showStats = $state(false)
 let currentMode: GameMode | null = $state(null)
-
+let autoPauseEnabled = $derived(game.autoPause > 0)
 function handleReset() {
 	onReset()
 	onResume()
@@ -32,6 +32,7 @@ $effect(() => {
 	if (!showStats) {
 		currentMode = null
 	}
+	game.saveGame()
 })
 </script>
 
@@ -46,6 +47,35 @@ $effect(() => {
                 <p>Current Game: {formatTime(game.time.timeElapsed)}</p>
                 <p>Total Playtime: {formatTime(game.time.totalTime)}</p>
                 <p class="mt-2">Current Mistakes: {game.mistakes.current}</p>
+            </div>
+
+            <!-- Auto Pause Controls -->
+            <div class="mb-6 flex flex-col items-center gap-2">
+              <label class="flex items-center gap-2 text-sm dark:text-gray-300">
+                {autoPauseEnabled ?"Disable":"Enable"} Auto-Pause
+                <input
+                  type="checkbox"
+                  class="w-4 h-4 rounded accent-blue-500"
+                  checked={autoPauseEnabled}
+                  onclick={()=> game.autoPause = game.autoPause === 0 ? 30:0}
+                />
+                {#if autoPauseEnabled}
+                    <input
+                      disabled={!autoPauseEnabled}
+                      type="range"
+                      min="30"
+                      step="5"
+                      max="300"
+                      class="w-24 px-2 text-sm rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      bind:value={game.autoPause}
+                    />
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 text-sm dark:text-gray-300">{game.autoPause} seconds</span>
+                  </div>
+                {/if}
+              </label>
+
+
             </div>
             <!-- Dark Mode Toggle -->
             <div class="flex items-center justify-center gap-2 mb-6">
@@ -70,7 +100,7 @@ $effect(() => {
             </div>
 
             <div class="flex flex-col gap-3">
-                {@render menuButton(onResume,"Resume Game")}
+                {@render menuButton(onResume,"Resume")}
                 {@render menuButton(() => showStats = true,"Statistics","rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors")}
                 {@render menuButton(onNewGame,"New Game","rounded bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700 transition-colors")}
                 {@render menuButton(handleReset,"Reset Game","rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors")}

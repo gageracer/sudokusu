@@ -29,6 +29,7 @@ export class SudokuGame {
 	sudoku: SvelteMap<number, SudokuCell> = new SvelteMap()
 	mistakes: MistakeCount = $state({ current: 0, total: 0 })
 	statistics: Statistics = $state(DEFAULT_STATISTICS)
+	autoPause: number = $state(60)
 	size: GameMode | 0 = $state(0)
 	init = $state(true)
 	time: TimeCount = $state({ timeElapsed: 0, totalTime: 0 })
@@ -50,7 +51,7 @@ export class SudokuGame {
 	async reload(size = 9) {
 		if (this.init) return
 		if (size !== this.size) {
-			this.size = size
+			this.size = size as GameMode
 			this.generateSudoku()
 			this.mistakes.current = 0
 			this.time.timeElapsed = 0
@@ -453,6 +454,7 @@ export class SudokuGame {
 		const gameState = {
 			size: this.size,
 			mistakes: this.mistakes,
+			autoPause: this.autoPause,
 			sudoku: Array.from(this.sudoku.entries()).map(([id, cell]) => [
 				id,
 				{
@@ -474,9 +476,9 @@ export class SudokuGame {
 				this.reset()
 				return false
 			}
-			this.size = gameState.size
+			this.size = gameState.size as GameMode
 			this.mistakes = gameState.mistakes
-
+			this.autoPause = gameState.autoPause ?? this.autoPause
 			// Clear existing maps
 			this.sudoku.clear()
 			this.remainingNumbers.clear()
