@@ -40,7 +40,7 @@ $effect(() => {
 
 
 <div class="fixed inset-0 z-40 bg-transparent"></div>
-<div transition:fade={{duration: 500}} class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center">
+<div transition:fade={{duration: 200}} class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center">
     <div in:fly|global={{x:-200}} out:fly|global={{x:200}} class="bg-yellow-50 dark:bg-gray-800 max-h-[90vh] overflow-y-auto p-6 rounded-lg text-center min-w-[300px] max-w-2xl w-full mx-4">
         {#if !showStats}
             <h2 class="text-xl font-bold mb-4 dark:text-white">Game Paused</h2>
