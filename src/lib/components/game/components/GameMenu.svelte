@@ -33,7 +33,7 @@ const difficulties: { size: GameMode; label: string }[] = [
         {#if !showStats}
             <h1 class="text-3xl font-bold mb-6">Sudoku</h1>
 
-            {#if game.sudoku.size > 0 && !isWon}
+            {#if game.sudoku.size > 0 && game.time.totalTime > 0 && !isWon}
                 <div class="mb-6">
                     <h2 class="text-xl mb-2">Continue Previous Game?</h2>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
