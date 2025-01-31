@@ -49,7 +49,7 @@ const difficulties: { size: GameMode; label: string }[] = [
                         class="w-full py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                         onclick={onContinue}
                     >
-                        Continue
+                        {game.time.totalTime > 0 ? "Start":"Continue"}
                     </button>
                     <button
                         class="w-full py-3 px-6 bg-green-500 text-white rounded-lg hover:bg-green-600"
