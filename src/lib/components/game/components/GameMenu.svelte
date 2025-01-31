@@ -31,7 +31,9 @@ const difficulties: { size: GameMode; label: string }[] = [
 <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center">
     <div in:fly|global={{x:-200}} out:fly|global={{x:200}} class="bg-yellow-50 dark:bg-gray-800 p-8 rounded-lg text-center dark:text-white max-w-md w-full mx-4">
         {#if !showStats}
-            <h1 class="text-3xl font-bold mb-6">Sudoku</h1>
+            <h1 class="text-3xl font-bold mb-6">
+                <span class="text-[#38b6ff]">Su</span><span class="text-[#ff5757]">do</span><span class="text-[#5ce1e6]">ku</span><span class="text-[#38b6ff]">Su</span>
+            </h1>
 
             {#if game.sudoku.size > 0 && game.time.totalTime > 0 && !isWon}
                 <div class="mb-6">
