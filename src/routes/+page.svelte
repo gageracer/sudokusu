@@ -1,17 +1,25 @@
 <script lang="ts">
+import { browser } from "$app/environment";
 import Sudoku from "$lib/components/game/Sudoku.svelte";
+import { onMount } from "svelte";
 
 let size: 2 | 4 | 6 | 8 | 9 = $state(2)
 let darkMode = $state(false)
 let isGuess = $state(false)
-const savedSize = localStorage.getItem("gamemode-size")
-if (savedSize && savedSize !== null) {
-	size = JSON.parse(savedSize)
-}
+
+onMount(()=>{
+  const savedSize = localStorage.getItem("gamemode-size")
+  if (savedSize && savedSize !== null) {
+  	size = JSON.parse(savedSize)
+  }
+})
 
 $effect(() => {
+  if(browser){
+
 	localStorage.setItem("gamemode-size", String(size))
 	localStorage.setItem("sudoku-dark-mode", String(darkMode))
+  }
 })
 </script>
 

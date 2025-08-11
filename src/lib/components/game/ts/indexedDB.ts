@@ -1,5 +1,5 @@
-import type {  gameState, Statistics,  MistakeCount,  SudokuCell,  TimeCount } from "./types"
-
+import type { Statistics, MistakeCount, TimeCount } from "./types"
+import {browser} from "$app/environment"
 const DB_NAME = "sudokusuDB"
 export const GAME_STORE = "gameState"
 export const TIME_STORE = "timeState"
@@ -20,9 +20,12 @@ export type gameStateType = {
         solution: number;
     })[][];
     remainingNumbers: [number,number][];
-} 
+}
 
 async function openDB(): Promise<IDBDatabase> {
+  if( !browser || typeof indexedDB === 'undefined') {
+    throw new Error('IndexedDB not available')
+  }
 	return new Promise((resolve, reject) => {
 		const request = indexedDB.open(DB_NAME, DB_VERSION)
 
@@ -121,6 +124,7 @@ export async function storeInIndexedDB(
 	key: string,
 	value: gameStateType | Statistics,
 ): Promise<void> {
+  if(!browser) return
 	try {
 		const plainValue = JSON.parse(JSON.stringify(value))
 		const db = await openDB()
@@ -139,6 +143,7 @@ export async function storeInIndexedDB(
 }
 
 export async function fetchFromIndexedDB(key: string): Promise<gameStateType | Statistics> {
+  if (!browser) return null
 	try {
 		const db = await openDB()
 		return new Promise((resolve, reject) => {

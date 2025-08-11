@@ -34,7 +34,7 @@ let {
 // const sendGuess = $derived(isGuess)
 
 let isMobile = $derived(
-	browser &&
+	browser && typeof navigator !== 'undefined' &&
 		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 			navigator.userAgent,
 		),
@@ -45,11 +45,15 @@ let showTutorial = $state(false)
 
 function handleTutorialComplete() {
 	showTutorial = false
-	localStorage.setItem("tutorial-completed", "true")
+	if(browser){
+	  localStorage.setItem("tutorial-completed", "true")
+	}
 }
 function handleTutorialSkip() {
 	showTutorial = false
-	localStorage.setItem("tutorial-completed", "true")
+	if(browser){
+	  localStorage.setItem("tutorial-completed", "true")
+	}
 }
 
 setSudokusuContent()
@@ -83,7 +87,7 @@ function handleNewGame(selectedSize: GameMode) {
 	showMenu = false
 	isPaused = false
 	// Start tutorial if it's never been completed
-	if (localStorage.getItem("tutorial-completed") !== "true") {
+	if (browser && localStorage.getItem("tutorial-completed") !== "true") {
 		showTutorial = true
 	}
 }
@@ -119,12 +123,14 @@ function handleReset() {
 }
 
 $effect(() => {
+  if(browser) {
 	const savedPreference = localStorage.getItem("sudoku-dark-mode")
 	if (savedPreference !== null) {
 		darkMode = savedPreference === "true"
-	} else {
+	} else if (typeof window !== 'undefined') {
 		darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
 	}
+  }
 })
 
 function toggleGuessMode() {
