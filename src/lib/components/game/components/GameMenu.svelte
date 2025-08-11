@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSudokusuContent, type SudokuGame } from "../ts"
+import { getSudokusuContent} from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 import StatisticsView from "../components/StatisticView.svelte"
@@ -61,7 +61,7 @@ const difficulties: { size: GameMode; label: string }[] = [
                     </button>
                     <h3 class="text-lg font-bold mt-4 mb-2">New Game</h3>
                     <div class="grid grid-cols-1 gap-2">
-                        {#each difficulties as {size, label}}
+                        {#each difficulties as {size, label} (label)}
                             <button
                                 class="w-full py-2 px-4 bg-yellow-300 dark:bg-gray-700 rounded-lg
                                        hover:bg-yellow-500 dark:hover:bg-gray-600 transition-colors"
@@ -75,7 +75,7 @@ const difficulties: { size: GameMode; label: string }[] = [
             {:else}
                 <div class="flex flex-col gap-4">
                     <h2 class="text-xl mb-2">Select Difficulty</h2>
-                    {#each difficulties as {size, label}}
+                    {#each difficulties as {size, label} (label)}
                         <button
                             class="w-full py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                             onclick={() => onNewGame(size)}

@@ -2,7 +2,6 @@
 import {
 	getSudokusuContent,
 	setSudokusuContent,
-	SudokuGame,
 	type SudokuCell,
 } from "./ts"
 import { browser } from "$app/environment"
@@ -32,7 +31,7 @@ let {
 	isGuess = $bindable(false),
 }: { size: GameMode; darkMode?: boolean; isGuess?: boolean } = $props()
 
-const sendGuess = $derived(isGuess)
+// const sendGuess = $derived(isGuess)
 
 let isMobile = $derived(
 	browser &&
@@ -55,7 +54,7 @@ function handleTutorialSkip() {
 
 setSudokusuContent()
 const game = getSudokusuContent()
-$inspect(game.autoPause)
+// $inspect(game.autoPause)
 
 if (game.size !== 0 && game.size !== size) {
 	size = game.size

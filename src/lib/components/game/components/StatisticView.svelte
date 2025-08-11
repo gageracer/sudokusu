@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSudokusuContent, type SudokuGame } from "../ts"
+import { getSudokusuContent } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 
@@ -43,7 +43,7 @@ function bestTime(currentMode: GameMode) {
 <div class="space-y-6 text-gray-900 dark:text-white">
     <!-- Mode Selection -->
     <div class="flex flex-wrap justify-center gap-2">
-        {#each difficulties as {size, label}}
+        {#each difficulties as {size, label}(label)}
             <button
                 class="px-3 py-1 rounded-full text-sm transition-colors
                     {currentMode === size
@@ -92,10 +92,10 @@ function bestTime(currentMode: GameMode) {
                 <div class="bg-yellow-300/25 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <h3 class="font-bold mb-3">Performance</h3>
                     <div class="space-y-2">
-                        {#each getStarDistribution(currentMode) as { stars, count }}
+                        {#each getStarDistribution(currentMode) as { stars, count } (stars)}
                             <div class="flex justify-between items-center">
                                 <div class="flex gap-1">
-                                    {#each Array(stars) as _}
+                                    {#each Array(stars) as _ (_)}
                                         <span class="text-yellow-400 dark:text-yellow-500">★</span>
                                     {/each}
                                 </div>

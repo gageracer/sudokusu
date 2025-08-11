@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSudokusuContent, type SudokuGame } from "../ts"
+import { getSudokusuContent} from "../ts"
 
 let {
 	highlightedNumber,
@@ -12,7 +12,7 @@ const game = getSudokusuContent()
 
 <div class="mb-4 flex justify-center gap-4">
     {#if game.remainingNumbers}
-        {#each game.remainingNumbers as [number, count]}
+        {#each game.remainingNumbers as [number, count] (number)}
             <div class="flex flex-col items-center">
                 <span
                     class="text-lg font-bold {highlightedNumber === number ? 'bg-yellow-300 dark:bg-yellow-800' : ''}"

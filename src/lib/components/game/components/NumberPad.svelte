@@ -11,7 +11,7 @@ let {
 </script>
 
 <div class="mx-auto mt-4 grid max-w-[500px] grid-cols-5 gap-2">
-    {#each Array.from({ length: size }, (_, i) => i + 1) as number}
+    {#each Array.from({ length: size }, (_, i) => i + 1) as number (number)}
         <button
             data-numpad={number}
             class="aspect-square rounded-md border border-gray-500 dark:border-gray-600 text-xl dark:text-white font-bold grid place-items-center relative
