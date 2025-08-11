@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSudokusuContent, type SudokuCell, type SudokuGame } from "../ts"
+import { getSudokusuContent, type SudokuCell } from "../ts"
 
 let {
 	isGuess = $bindable(false),
@@ -87,7 +87,7 @@ function getCellClasses(cell: SudokuCell): string {
     role="button"
     tabindex="0"
 >
-    {#each game.sudoku.values() as cell}
+    {#each game.sudoku.values() as cell (cell)}
         <div data-cell={`${cell.x}-${cell.y}`} class="relative {getCellClasses(cell)}">
             <input
                 readonly
@@ -99,7 +99,7 @@ function getCellClasses(cell: SudokuCell): string {
             />
             {#if cell.guess.size > 0 && !cell.val}
                 <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none text-xs p-0.5">
-                    {#each Array.from({length: 9}, (_, i) => i + 1) as num}
+                    {#each Array.from({length: 9}, (_, i) => i + 1) as num (num)}
                         <div class="flex items-center justify-center">
                             {#if cell.guess.has(num)}
                                 <span class="text-green-600 dark:text-green-400 opacity-70">{num}</span>

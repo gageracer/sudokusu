@@ -1,26 +1,26 @@
 <script lang="ts">
-import { TUTORIAL_STEPS } from "../ts/tutorial.ts"
-import { getSudokusuContent, SudokuGame } from "../ts"
+import { TUTORIAL_STEPS } from "../ts/tutorial"
+// import { getSudokusuContent } from "../ts"
 import TutorialHighlight from "./TutorialHighlight.svelte"
 let {
 	onComplete,
 	onSkip,
 }: { onComplete: () => void; onSkip: () => void } = $props()
 
-const game = getSudokusuContent()
+// const game = getSudokusuContent()
 let currentStep = $state(0)
 
-const stepGroups = [
-    { title: "Basics", steps: [0, 1, 2] },
-    { title: "Numbers", steps: [3, 4] },
-    { title: "Advanced", steps: [5, 6, 7] }
-];
+// const stepGroups = [
+//     { title: "Basics", steps: [0, 1, 2] },
+//     { title: "Numbers", steps: [3, 4] },
+//     { title: "Advanced", steps: [5, 6, 7] }
+// ];
 
-function getCurrentGroup() {
-    return stepGroups.find(group => 
-        group.steps.includes(currentStep)
-    );
-}
+// function getCurrentGroup() {
+//     return stepGroups.find(group => 
+//         group.steps.includes(currentStep)
+//     );
+// }
 
 function handleNext() {
 	if (currentStep < TUTORIAL_STEPS.length - 1) {

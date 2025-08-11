@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSudokusuContent, type SudokuGame } from "../ts"
+import { getSudokusuContent } from "../ts"
 
 let {
     isPaused = $bindable(false),

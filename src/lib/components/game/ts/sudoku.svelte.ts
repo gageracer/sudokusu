@@ -1,4 +1,5 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity"
+import {browser} from "$app/environment"
 import {
 	type BoxSize,
 	type GameMode,
@@ -38,6 +39,7 @@ export class SudokuGame {
 	boxSize = $derived(this.getBoxSize())
 
 	constructor() {
+	if (browser) {
 		Promise.all([this.loadGame(), this.loadTime(), this.loadStatistics()])
 			.then(([loaded]) => {
 				if (!loaded) {
@@ -46,6 +48,9 @@ export class SudokuGame {
 				this.init = false
 			})
 			.catch(console.error)
+	} else {
+	  this.init = false
+	  }
 	}
 
 	async reload(size = 9) {
@@ -367,7 +372,7 @@ export class SudokuGame {
 	cellID(x: number, y: number):number {
 	return this.size * (y - 1) + x
 	}
-	
+
 	isValid(id:number, num: number): boolean {
 		const cell = this.sudoku.get(id)
 		const result = cell?.solution === num
@@ -423,7 +428,7 @@ export class SudokuGame {
 			}
 		}
 	}
-	
+
 	getBoxBorders(x: number, y: number) {
 		const boxRow = Math.floor((y - 1) / this.boxSize.height)
 		const boxCol = Math.floor((x - 1) / this.boxSize.width)
@@ -433,7 +438,7 @@ export class SudokuGame {
 			thickBottom: y === this.boxSize.height * (boxRow + 1) && y !== this.size,
 		}
 	}
-	
+
 	async checkAndHandleCompletion(): Promise<boolean> {
 		const complete = this.isPuzzleComplete()
 		if (complete) {
@@ -441,7 +446,7 @@ export class SudokuGame {
 		}
 		return complete
 	}
-	
+
 	isPuzzleComplete(): boolean {
 		if (this.remainingNumbers.size === 0) return false
 		const complete = Array.from(this.remainingNumbers.values()).every(
@@ -512,7 +517,7 @@ export class SudokuGame {
 			for (const [num, count] of gameState.remainingNumbers) {
 				this.remainingNumbers.set(Number(num), count)
 			}
-			
+
 			return true
 		} catch (error) {
 			console.error("Error loading game:", error)

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { fade, fly } from "svelte/transition"
-import { getSudokusuContent, type SudokuGame } from "../ts"
+import { getSudokusuContent } from "../ts"
 import type { GameMode } from "../ts/types"
 import { formatTime } from "../utils/formatTime"
 import StatisticsView from "./StatisticView.svelte"
