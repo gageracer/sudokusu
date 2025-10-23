@@ -34,7 +34,7 @@ $effect(() => {
 })
 </script>
 
-<div class="min-h-screen transition-colors" class:dark={isDarkActive}>
+<div class="min-h-screen transition-colors" class:dark={isDarkActive} data-theme={darkMode}>
     <div class="min-h-screen mx-auto p-4 {isGuess ? 'bg-green-50 dark:bg-[#08130b]': 'bg-yellow-50 dark:bg-gray-900'}">
 
 
