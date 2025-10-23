@@ -6,6 +6,16 @@
 		<link rel="manifest" crossorigin="use-credentials" href="/manifest.json" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+		<style>
+				/* Prevent white flash - respect system preference */
+				html, body {
+					background-color: oklch(98.7% 0.026 102.212);
+					color: black;
+				}
+				@media (prefers-color-scheme: dark) {
+					html, body { background-color: oklch(0.21 0.034 264.665); color: white; }
+				}
+		</style>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
