@@ -1,9 +1,5 @@
 <script lang="ts">
-import {
-	getSudokusuContent,
-	setSudokusuContent,
-	type SudokuCell,
-} from "./ts"
+import { getSudokusuContent, setSudokusuContent, type SudokuCell } from "./ts"
 import { browser } from "$app/environment"
 import Timer from "./components/Timer.svelte"
 import GameMenu from "./components/GameMenu.svelte"
@@ -22,19 +18,22 @@ import {
 import type { GameMode } from "./ts/types"
 import { SvelteSet } from "svelte/reactivity"
 
+type ThemeMode = "auto" | "light" | "dark"
+
 let gridRef: HTMLDivElement
 let isWon = $state(false)
 let showMenu = $state(true)
 let {
 	size = $bindable(),
-	darkMode = $bindable(false),
+	darkMode = $bindable("auto"),
 	isGuess = $bindable(false),
-}: { size: GameMode; darkMode?: boolean; isGuess?: boolean } = $props()
+}: { size: GameMode; darkMode?: ThemeMode; isGuess?: boolean } = $props()
 
 // const sendGuess = $derived(isGuess)
 
 let isMobile = $derived(
-	browser && typeof navigator !== 'undefined' &&
+	browser &&
+		typeof navigator !== "undefined" &&
 		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 			navigator.userAgent,
 		),
@@ -45,14 +44,14 @@ let showTutorial = $state(false)
 
 function handleTutorialComplete() {
 	showTutorial = false
-	if(browser){
-	  localStorage.setItem("tutorial-completed", "true")
+	if (browser) {
+		localStorage.setItem("tutorial-completed", "true")
 	}
 }
 function handleTutorialSkip() {
 	showTutorial = false
-	if(browser){
-	  localStorage.setItem("tutorial-completed", "true")
+	if (browser) {
+		localStorage.setItem("tutorial-completed", "true")
 	}
 }
 
@@ -123,15 +122,32 @@ function handleReset() {
 }
 
 $effect(() => {
-  if(browser) {
-	const savedPreference = localStorage.getItem("sudoku-dark-mode")
-	if (savedPreference !== null) {
-		darkMode = savedPreference === "true"
-	} else if (typeof window !== 'undefined') {
-		darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+	if (browser) {
+		const oldPreference = localStorage.getItem("sudoku-theme-mode")
+		if (
+			oldPreference === "dark" ||
+			oldPreference === "light" ||
+			oldPreference === "auto"
+		) {
+			darkMode = oldPreference as ThemeMode
+		} else {
+			darkMode = "auto"
+			localStorage.setItem("sudoku-theme-mode", darkMode)
+		}
 	}
-  }
+	localStorage.removeItem("sudoku-dark-mode")
 })
+
+function cycleThemeMode() {
+	const modes: ThemeMode[] = ["auto", "light", "dark"]
+	const currentIndex = modes.indexOf(darkMode)
+	const nextIndex = (currentIndex + 1) % modes.length
+	darkMode = modes[nextIndex]
+
+	if (browser) {
+		localStorage.setItem("sudoku-theme-mode", darkMode)
+	}
+}
 
 function toggleGuessMode() {
 	isGuess = !isGuess
@@ -330,6 +346,7 @@ function isNumberDisabled(num: number): boolean {
          onEnableTutorial={() => {
             showTutorial = true
         }}
+        onCycleTheme={cycleThemeMode}
      />
  {/if}
 
